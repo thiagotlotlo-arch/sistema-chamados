@@ -20,7 +20,35 @@ function money(n){return Number(n||0).toLocaleString('pt-BR',{style:'currency',c
 function next(d,k){const c=d.config?d.config:d;c[k]=Number(c[k]||1);return c[k]++} function esc(v){return String(v??'').replace(/[&<>"']/g,s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]))}
 function auth(req,res,next){if(req.session.user)return next();res.redirect('/login')}
 function opt(v,cur){return `<option ${String(v)==String(cur)?'selected':''}>${esc(v)}</option>`}
-function layout(req,title,body){const d=db();const c=d.config||{};const menu=[['/','Início'],['/chamados','Chamados'],['/lojas','Lojas'],['/prestadores','Prestadores'],['/proprietarios','Proprietários'],['/lembretes','Lembretes'],['/preventivas','Preventivas'],['/os','Ordens de Serviço'],['/importar-planilha','Importar'],['/ponto-horas','Ponto/Horas'],['/config','Config'],['/sair','Sair']];return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="/public/style.css"><style>:root{--primary:${c.temaCor||'#2563eb'}}</style></head><body><header class="top"><h1>${esc(c.nomeSistema||'V&B CHAMADOS')}</h1><small>${esc(c.subtitulo||'Chamados de manutenção')}</small><nav class="nav">${menu.map(([h,t])=>`<a class="btn small" href="${h}">${t}</a>`).join('')}</nav></header><main class="wrap">${body}</main><button class="btn audio" id="audioBtn">🔊 Alarme ativo / testar</button><div class="badge">V12.0</div><div class="loading" id="loading">PROCESSANDO... AGUARDE</div><script src="/public/app.js"></script></body></html>`}
+function layout(req,title,body){const d=db();const c=d.config||{};const menu=[['/','Início'],['/chamados','Chamados'],['/lojas','Lojas'],['/prestadores','Prestadores'],['/proprietarios','Proprietários'],['/lembretes','Lembretes'],['/preventivas','Preventivas'],['/os','Ordens de Serviço'],['/importar-planilha','Importar'],['/ponto-horas','Ponto/Horas'],['/config','Config'],['/sair','Sair']];return `<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><link rel="stylesheet" href="/public/style.css"><style>:root{--primary:${c.temaCor||'#2563eb'}}</style></head><body><header class="top"><h1>${esc(c.nomeSistema||'V&B CHAMADOS')}</h1><small>${esc(c.subtitulo||'Chamados de manutenção')}</small><nav class="nav">${menu.map(([h,t])=>`<a class="btn small" href="${h}">${t}</a>`).join('')}</nav></header><main class="wrap">${body}</main><button class="btn audio" id="audioBtn">🔊 Alarme ativo / testar</button><div class="badge">V12.0</div><div class="loading" id="loading">PROCESSANDO... AGUARDE</div><script src="/public/app.js"></script>
+<!-- PATCH V12.1 CLIENT -->
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  if(window.__V121__)return;window.__V121__=true;
+  document.querySelectorAll(".v12-badge,.v121-badge").forEach(x=>x.remove());
+  var bd=document.createElement("div");bd.className="v121-badge";bd.textContent="V12.1";document.body.appendChild(bd);
+
+  if(location.pathname==="/config"){
+    document.querySelectorAll("p,div,section,.card").forEach(function(el){
+      var t=(el.textContent||"").toUpperCase();
+      if(t.includes("LOGIN PADRÃO") || t.includes("OLITECH / 051309")){
+        el.style.display="none";
+      }
+    });
+    var main=document.querySelector("main,.container,.content")||document.body;
+    var box=document.createElement("div");
+    box.className="card v121-config-links";
+    box.innerHTML='<h2>USUÁRIOS, PERMISSÕES E BACKUP</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a> <a class="btn" href="/perfis">🔐 Perfis/Permissões</a> <a class="btn" href="/backup">💾 Backup/Restauração</a>';
+    main.appendChild(box);
+  }
+
+  var nav=document.querySelector("nav,.menu,header");
+  if(nav && !document.querySelector('a[href="/usuarios"]')){
+    var a=document.createElement("a");a.href="/usuarios";a.className="btn small";a.textContent="USUÁRIOS";nav.appendChild(a);
+  }
+});
+</script>
+</body></html>`}
 function formHidden(id){return id?`<input type="hidden" name="id" value="${esc(id)}">`:''}
 function actions(back){return `<div class="actions"><button type="submit">💾 Salvar</button><a class="btn secondary" href="${back}">Voltar</a></div>`}
 function filePdfBox(){return `<details class="card" open><summary>📄 Preencher por PDF/cartão CNPJ</summary><label>Enviar PDF<input type="file" accept=".pdf" class="pdfInput"></label><button type="button" class="pdfBtn">Pesquisar PDF</button><span> Preenche CNPJ, nome, CEP, endereço, cidade, UF e telefone.</span></details>`}
@@ -29,7 +57,35 @@ function lower(s){return String(s||'').toLowerCase()}
 function match(o,q){q=lower(q);return !q||Object.values(o).some(v=>lower(Array.isArray(v)?v.join(' '):v).includes(q))}
 function onlyNumFields(){return ` oninput="this.value=this.value.replace(/\\D/g,'')" `}
 function listaServicos(d,sel=[]){sel=Array.isArray(sel)?sel:sel?[sel]:[];return (d.tiposServico||[]).map(s=>`<label><input type="checkbox" name="servicos" value="${esc(s)}" ${sel.includes(s)?'checked':''}> ${esc(s)}</label>`).join('')}
-app.get('/login',(req,res)=>res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/public/style.css"><title>Login</title></head><body class="login"><form class="card" method="post" action="/login"><div class="logoBox">V12</div><h2>LOGIN</h2><label>Usuário<input name="usuario" value="olitech" required></label><label>Senha<input name="senha" type="password" required></label><div class="actions"><button>Entrar</button></div></form></body></html>`));
+app.get('/login',(req,res)=>res.send(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/public/style.css"><title>Login</title></head><body class="login"><form class="card" method="post" action="/login"><div class="logoBox">V12</div><h2>LOGIN</h2><label>Usuário<input name="usuario" value="olitech" required></label><label>Senha<input name="senha" type="password" required></label><div class="actions"><button>Entrar</button></div></form>
+<!-- PATCH V12.1 CLIENT -->
+<script>
+document.addEventListener("DOMContentLoaded",function(){
+  if(window.__V121__)return;window.__V121__=true;
+  document.querySelectorAll(".v12-badge,.v121-badge").forEach(x=>x.remove());
+  var bd=document.createElement("div");bd.className="v121-badge";bd.textContent="V12.1";document.body.appendChild(bd);
+
+  if(location.pathname==="/config"){
+    document.querySelectorAll("p,div,section,.card").forEach(function(el){
+      var t=(el.textContent||"").toUpperCase();
+      if(t.includes("LOGIN PADRÃO") || t.includes("OLITECH / 051309")){
+        el.style.display="none";
+      }
+    });
+    var main=document.querySelector("main,.container,.content")||document.body;
+    var box=document.createElement("div");
+    box.className="card v121-config-links";
+    box.innerHTML='<h2>USUÁRIOS, PERMISSÕES E BACKUP</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a> <a class="btn" href="/perfis">🔐 Perfis/Permissões</a> <a class="btn" href="/backup">💾 Backup/Restauração</a>';
+    main.appendChild(box);
+  }
+
+  var nav=document.querySelector("nav,.menu,header");
+  if(nav && !document.querySelector('a[href="/usuarios"]')){
+    var a=document.createElement("a");a.href="/usuarios";a.className="btn small";a.textContent="USUÁRIOS";nav.appendChild(a);
+  }
+});
+</script>
+</body></html>`));
 app.post('/login',(req,res)=>{const d=db();const u=up(req.body.usuario);const s=String(req.body.senha||'');const user=(d.usuarios||[]).find(x=>up(x.usuario||x.email||x.nome)===u&&String(x.senha)===s&&up(x.ativo||'SIM')!=='NÃO');if(user){req.session.user={id:user.id,nome:user.nome||user.usuario,usuario:user.usuario,perfil:user.perfil};res.redirect('/')}else res.send(`<script>alert('Usuário ou senha inválidos');location.href='/login'</script>`)});
 app.get('/sair',(req,res)=>req.session.destroy(()=>res.redirect('/login')));
 app.get('/',auth,(req,res)=>{const d=db();const user=up(req.session.user.nome);const lemb=(d.lembretes||[]).filter(l=>up(l.fixarInicio||'SIM')==='SIM'&&up(l.concluido)!=='SIM'&&(up(l.mostrarTodos)==='SIM'||up(l.analista||'TODOS')==='TODOS'||up(l.analista)===user));const meus=(d.chamados||[]).filter(c=>up(c.analista)===user&&up(c.status)!=='FINALIZADO');const sem=(d.chamados||[]).filter(c=>!c.analista&&up(c.status)!=='FINALIZADO');res.send(layout(req,'Início',`${lemb.length?`<section class="card"><h2>📌 Lembretes fixados</h2><div class="postits">${lemb.map(postit).join('')}</div></section>`:''}<section class="card"><h2>Ações rápidas</h2><div class="actions"><a class="btn" href="/chamados/novo">+ Criar chamado rápido</a><a class="btn secondary" href="/chamados/novo?completo=1">Abrir chamado completo</a><a class="btn secondary" href="/os/nova">Juntar chamados / Gerar OS</a><a class="btn secondary" href="/relatorios">Relatório por perfil</a></div></section>${tabelaChamados('Minha grid inicial',meus)}${tabelaChamados('Chamados sem analista definido',sem)}`))});
@@ -86,5 +142,261 @@ app.get('/api/cnpj/:cnpj',auth,async(req,res)=>{try{let cnpj=dig(req.params.cnpj
 function dataLists(d){return `${datalistAnalistas(d)}<datalist id="lojasList">${(d.lojas||[]).map(l=>`<option value="${esc(l.nome)}"></option>`).join('')}</datalist><datalist id="prestadoresList">${(d.prestadores||[]).map(p=>`<option value="${esc(p.empresa||p.responsavel)}"></option>`).join('')}</datalist><datalist id="servicosList">${(d.tiposServico||[]).map(s=>`<option value="${esc(s)}"></option>`).join('')}</datalist>`}
 function datalistAnalistas(d){let set=new Set(['TODOS','ADMINISTRADOR',...(d.usuarios||[]).map(u=>u.nome||u.usuario)]);return `<datalist id="analistas">${[...set].map(a=>`<option value="${esc(up(a))}"></option>`).join('')}</datalist>`}
 function modalProp(){return `<div class="modal" id="propModal"><div class="box"><h2>Novo proprietário</h2><form method="post" action="/proprietarios/salvar"><div class="grid two"><label>Nome<input name="nome"></label><label>Telefone<input name="telefone"></label><label>CPF<input name="cpf"></label><label>CNPJ<input name="cnpj"></label></div><div class="actions"><button>Salvar</button><button type="button" class="secondary" onclick="closeModal('propModal')">Fechar</button></div></form></div></div>`}
+
+
+/* PATCH V12.1 - USUÁRIOS, ANALISTAS, PERMISSÕES, BACKUP E RESTAURAÇÃO */
+function v121Up(v){return String(v||"").trim().toUpperCase()}
+function v121Clean(v){return String(v||"").trim()}
+function v121Next(d,k){d.config=d.config||{};d.config[k]=Number(d.config[k]||1);return d.config[k]++}
+function v121PermissoesArray(v){return Array.isArray(v)?v:(v?[v]:[])}
+function v121EnsurePermDefaults(){
+  const d=db(); 
+  d.usuarios=d.usuarios||[];
+  d.perfis=d.perfis||[
+    {id:1,nome:"ADMIN",permissoes:["TODAS"]},
+    {id:2,nome:"ANALISTA",permissoes:["INICIO","CHAMADOS","LOJAS","PRESTADORES","PROPRIETARIOS","LEMBRETES","PREVENTIVAS","ORDENS_SERVICO"]},
+    {id:3,nome:"CONSULTA",permissoes:["INICIO","CHAMADOS","LOJAS","PRESTADORES","PROPRIETARIOS","LEMBRETES"]}
+  ];
+  let admin=d.usuarios.find(u=>v121Up(u.usuario||u.login||u.nome)==="OLITECH");
+  if(!admin){
+    d.usuarios.push({id:v121Next(d,"proximoUsuario"),nome:"OLITECH",usuario:"OLITECH",senha:"051309",perfil:"ADMIN",ativo:"SIM",permissoes:["TODAS"],analista:"SIM"});
+  }else{
+    admin.usuario="OLITECH"; admin.senha=admin.senha||"051309"; admin.perfil=admin.perfil||"ADMIN"; admin.ativo=admin.ativo||"SIM"; admin.permissoes=admin.permissoes||["TODAS"]; admin.analista=admin.analista||"SIM";
+  }
+  save(d);
+}
+try{v121EnsurePermDefaults()}catch(e){console.error("V12.1 defaults",e)}
+
+function v121UserCan(user,tela){
+  if(!user)return false;
+  const d=db();
+  const u=(d.usuarios||[]).find(x=>String(x.id)===String(user.id) || v121Up(x.usuario)===v121Up(user.usuario));
+  const perfil=(d.perfis||[]).find(p=>v121Up(p.nome)===v121Up((u&&u.perfil)||user.perfil));
+  const perms=[...(u?.permissoes||[]),...(perfil?.permissoes||[])].map(v121Up);
+  return perms.includes("TODAS") || perms.includes(v121Up(tela));
+}
+function v121AuthTela(tela){
+  return function(req,res,next){
+    if(!req.session.user)return res.redirect("/login");
+    if(!v121UserCan(req.session.user,tela)){
+      return res.send(layout("Sem permissão",`
+        <div class="card"><h2>SEM PERMISSÃO</h2>
+        <p>Seu usuário não possui permissão para acessar: <b>${safe(tela)}</b>.</p>
+        <a class="btn" href="/">Início</a></div>
+      `,req.session.user));
+    }
+    next();
+  }
+}
+const v121Telas = ["INICIO","CHAMADOS","LOJAS","PRESTADORES","PROPRIETARIOS","LEMBRETES","PREVENTIVAS","ORDENS_SERVICO","IMPORTAR","CONFIG","USUARIOS","BACKUP","PONTO_HORAS","RELATORIOS","PAGAMENTOS"];
+
+function v121UsuarioForm(req,res,u={}){
+  const d=db();
+  const edit=!!u.id;
+  res.send(layout(edit?"Editar usuário":"Novo usuário",`
+    <div class="bar">
+      <h2>${edit?"EDITAR":"NOVO"} USUÁRIO / ANALISTA</h2>
+      <a class="btn secondary" href="/usuarios">Voltar</a>
+    </div>
+    <form method="post" action="${edit?`/usuarios/${u.id}`:"/usuarios"}" class="card form">
+      <div class="grid4">
+        <label>Nome<input name="nome" value="${safe(u.nome||"")}" required></label>
+        <label>Usuário/login<input name="usuario" value="${safe(u.usuario||"")}" required></label>
+        <label>Senha<input name="senha" value="${safe(u.senha||"")}" required></label>
+        <label>Ativo
+          <select name="ativo">${["SIM","NÃO"].map(x=>`<option ${selected(u.ativo||"SIM",x)}>${x}</option>`).join("")}</select>
+        </label>
+        <label>Perfil
+          <select name="perfil">${(d.perfis||[]).map(p=>`<option ${selected(u.perfil||"ANALISTA",p.nome)}>${safe(p.nome)}</option>`).join("")}</select>
+        </label>
+        <label>É analista?
+          <select name="analista">${["SIM","NÃO"].map(x=>`<option ${selected(u.analista||"SIM",x)}>${x}</option>`).join("")}</select>
+        </label>
+        <label>Email<input name="email" value="${safe(u.email||"")}"></label>
+        <label>Telefone<input name="telefone" value="${safe(u.telefone||"")}"></label>
+      </div>
+      <h3>Permissões específicas</h3>
+      <div class="perm-grid">
+        ${v121Telas.map(t=>`
+          <label class="checkline">
+            <input type="checkbox" name="permissoes" value="${t}" ${(u.permissoes||[]).map(v121Up).includes(t)?"checked":""}> ${t.replace("_"," ")}
+          </label>
+        `).join("")}
+      </div>
+      <div class="actions">
+        <button type="submit">💾 Salvar</button>
+        <a class="btn secondary" href="/usuarios">Voltar</a>
+      </div>
+    </form>
+  `,req.session.user));
+}
+
+app.get("/usuarios",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); d.usuarios=d.usuarios||[];
+  const q=v121Up(req.query.q||"");
+  const lista=d.usuarios.filter(u=>!q || v121Up(`${u.nome} ${u.usuario} ${u.perfil}`).includes(q));
+  res.send(layout("Usuários",`
+    <div class="bar">
+      <h2>USUÁRIOS / ANALISTAS</h2>
+      <a class="btn" href="/usuarios/novo">+ Novo usuário</a>
+      <a class="btn secondary" href="/perfis">Perfis/permissões</a>
+    </div>
+    <form class="card search"><input name="q" value="${safe(req.query.q||"")}" placeholder="Buscar usuário, analista ou perfil"><button>🔎 Buscar</button></form>
+    <div class="card">
+      <table>
+        <thead><tr><th>Nome</th><th>Usuário</th><th>Perfil</th><th>Analista</th><th>Ativo</th><th>Ações</th></tr></thead>
+        <tbody>
+          ${lista.map(u=>`<tr>
+            <td>${safe(u.nome)}</td><td>${safe(u.usuario)}</td><td>${safe(u.perfil)}</td><td>${safe(u.analista||"")}</td><td>${safe(u.ativo||"SIM")}</td>
+            <td><a class="btn small" href="/usuarios/${u.id}/editar">Editar</a> <form method="post" action="/usuarios/${u.id}/excluir" style="display:inline" onsubmit="return confirm('Excluir usuário?')"><button class="small danger">Excluir</button></form></td>
+          </tr>`).join("") || `<tr><td colspan="6">Nenhum usuário cadastrado.</td></tr>`}
+        </tbody>
+      </table>
+    </div>
+  `,req.session.user));
+});
+app.get("/usuarios/novo",auth,v121AuthTela("USUARIOS"),(req,res)=>v121UsuarioForm(req,res,{}));
+app.get("/usuarios/:id/editar",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const u=(db().usuarios||[]).find(x=>String(x.id)===String(req.params.id));
+  if(!u)return res.redirect("/usuarios");
+  v121UsuarioForm(req,res,u);
+});
+app.post("/usuarios",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); d.usuarios=d.usuarios||[];
+  d.usuarios.push({
+    id:v121Next(d,"proximoUsuario"),
+    nome:v121Up(req.body.nome),
+    usuario:v121Up(req.body.usuario),
+    senha:String(req.body.senha||""),
+    perfil:v121Up(req.body.perfil||"ANALISTA"),
+    ativo:v121Up(req.body.ativo||"SIM"),
+    analista:v121Up(req.body.analista||"SIM"),
+    email:v121Clean(req.body.email),
+    telefone:v121Clean(req.body.telefone),
+    permissoes:v121PermissoesArray(req.body.permissoes).map(v121Up)
+  });
+  save(d); res.redirect("/usuarios");
+});
+app.post("/usuarios/:id",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); d.usuarios=d.usuarios||[];
+  const i=d.usuarios.findIndex(x=>String(x.id)===String(req.params.id));
+  if(i>=0){
+    d.usuarios[i]={...d.usuarios[i],
+      nome:v121Up(req.body.nome),
+      usuario:v121Up(req.body.usuario),
+      senha:String(req.body.senha||""),
+      perfil:v121Up(req.body.perfil||"ANALISTA"),
+      ativo:v121Up(req.body.ativo||"SIM"),
+      analista:v121Up(req.body.analista||"SIM"),
+      email:v121Clean(req.body.email),
+      telefone:v121Clean(req.body.telefone),
+      permissoes:v121PermissoesArray(req.body.permissoes).map(v121Up)
+    };
+  }
+  save(d); res.redirect("/usuarios");
+});
+app.post("/usuarios/:id/excluir",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); d.usuarios=d.usuarios||[];
+  d.usuarios=d.usuarios.filter(u=>String(u.id)!==String(req.params.id) || v121Up(u.usuario)==="OLITECH");
+  save(d); res.redirect("/usuarios");
+});
+
+function v121PerfilForm(req,res,p={}){
+  const edit=!!p.id;
+  res.send(layout(edit?"Editar perfil":"Novo perfil",`
+    <div class="bar"><h2>${edit?"EDITAR":"NOVO"} PERFIL</h2><a class="btn secondary" href="/perfis">Voltar</a></div>
+    <form class="card form" method="post" action="${edit?`/perfis/${p.id}`:"/perfis"}">
+      <label>Nome do perfil<input name="nome" value="${safe(p.nome||"")}" required></label>
+      <h3>Permissões</h3>
+      <div class="perm-grid">${[...v121Telas,"TODAS"].map(t=>`
+        <label class="checkline"><input type="checkbox" name="permissoes" value="${t}" ${(p.permissoes||[]).map(v121Up).includes(t)?"checked":""}> ${t.replace("_"," ")}</label>`).join("")}
+      </div>
+      <div class="actions"><button>💾 Salvar</button><a class="btn secondary" href="/perfis">Voltar</a></div>
+    </form>
+  `,req.session.user));
+}
+app.get("/perfis",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); d.perfis=d.perfis||[];
+  res.send(layout("Perfis",`
+    <div class="bar"><h2>PERFIS E PERMISSÕES</h2><a class="btn" href="/perfis/novo">+ Novo perfil</a><a class="btn secondary" href="/usuarios">Usuários</a></div>
+    <div class="card"><table><thead><tr><th>Perfil</th><th>Permissões</th><th>Ações</th></tr></thead><tbody>
+    ${d.perfis.map(p=>`<tr><td>${safe(p.nome)}</td><td>${safe((p.permissoes||[]).join(", "))}</td><td><a class="btn small" href="/perfis/${p.id}/editar">Editar</a></td></tr>`).join("")}
+    </tbody></table></div>
+  `,req.session.user));
+});
+app.get("/perfis/novo",auth,v121AuthTela("USUARIOS"),(req,res)=>v121PerfilForm(req,res,{}));
+app.get("/perfis/:id/editar",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const p=(db().perfis||[]).find(x=>String(x.id)===String(req.params.id));
+  if(!p)return res.redirect("/perfis");
+  v121PerfilForm(req,res,p);
+});
+app.post("/perfis",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); d.perfis=d.perfis||[];
+  d.perfis.push({id:v121Next(d,"proximoPerfil"),nome:v121Up(req.body.nome),permissoes:v121PermissoesArray(req.body.permissoes).map(v121Up)});
+  save(d); res.redirect("/perfis");
+});
+app.post("/perfis/:id",auth,v121AuthTela("USUARIOS"),(req,res)=>{
+  const d=db(); const p=(d.perfis||[]).find(x=>String(x.id)===String(req.params.id));
+  if(p){p.nome=v121Up(req.body.nome);p.permissoes=v121PermissoesArray(req.body.permissoes).map(v121Up);save(d);}
+  res.redirect("/perfis");
+});
+
+/* BACKUP E RESTAURAÇÃO */
+app.get("/backup",auth,v121AuthTela("BACKUP"),(req,res)=>{
+  res.send(layout("Backup",`
+    <div class="bar"><h2>BACKUP E RESTAURAÇÃO</h2><a class="btn secondary" href="/config">Voltar</a></div>
+    <div class="card">
+      <h3>Baixar backup</h3>
+      <p>Gera um arquivo JSON com todos os dados do sistema.</p>
+      <a class="btn" href="/backup/download">⬇️ Baixar backup</a>
+    </div>
+    <form class="card" method="post" action="/backup/restaurar" enctype="multipart/form-data" onsubmit="return confirm('Restaurar backup vai substituir os dados atuais. Continuar?')">
+      <h3>Restaurar backup</h3>
+      <input type="file" name="backup" accept=".json,application/json" required>
+      <div class="actions"><button type="submit">♻️ Restaurar</button></div>
+    </form>
+  `,req.session.user));
+});
+app.get("/backup/download",auth,v121AuthTela("BACKUP"),(req,res)=>{
+  const d=db();
+  const nome=`backup-vbchamados-${new Date().toISOString().slice(0,10)}.json`;
+  res.setHeader("Content-Type","application/json; charset=utf-8");
+  res.setHeader("Content-Disposition",`attachment; filename="${nome}"`);
+  res.end(JSON.stringify(d,null,2));
+});
+app.post("/backup/restaurar",auth,v121AuthTela("BACKUP"),upload.single("backup"),(req,res)=>{
+  try{
+    if(!req.file || !req.file.path) throw new Error("Arquivo não enviado.");
+    const fs = require("fs");
+    const txt = fs.readFileSync(req.file.path,"utf8");
+    const novo = JSON.parse(txt);
+    if(!novo || typeof novo !== "object") throw new Error("Backup inválido.");
+    save(novo);
+    res.send(layout("Backup restaurado",`<div class="card"><h2>BACKUP RESTAURADO</h2><p>Dados restaurados com sucesso.</p><a class="btn" href="/">Início</a></div>`,req.session.user));
+  }catch(e){
+    res.send(layout("Erro backup",`<div class="card"><h2>ERRO AO RESTAURAR</h2><p>${safe(e.message)}</p><a class="btn" href="/backup">Voltar</a></div>`,req.session.user));
+  }
+});
+
+/* LOGIN CASE INSENSITIVE */
+app.post("/login",(req,res,next)=>{
+  try{
+    const usuario=v121Up(req.body.usuario||req.body.email||req.body.login);
+    const senha=String(req.body.senha||req.body.password||"");
+    const d=db();
+    const u=(d.usuarios||[]).find(x=>v121Up(x.usuario||x.email||x.nome)===usuario && String(x.senha||"")===senha && v121Up(x.ativo||"SIM")!=="NÃO");
+    if(u){
+      req.session.user={id:u.id,usuario:u.usuario,nome:u.nome,perfil:u.perfil,permissoes:u.permissoes||[]};
+      return res.redirect("/");
+    }
+  }catch(e){}
+  next();
+});
+
+app.get("/api/v121/usuarios-analistas",auth,(req,res)=>{
+  const d=db();
+  res.json({ok:true,usuarios:(d.usuarios||[]).map(u=>({id:u.id,nome:u.nome,usuario:u.usuario,perfil:u.perfil,analista:u.analista,ativo:u.ativo}))});
+});
+
 app.use((req,res)=>res.status(404).send(layout(req,'Página não encontrada',`<section class="card"><h2>Página não encontrada</h2><p>A rota ${esc(req.path)} não foi localizada.</p><a class="btn" href="/">Início</a></section>`)));
 app.listen(PORT,()=>console.log('V12 rodando na porta '+PORT));
