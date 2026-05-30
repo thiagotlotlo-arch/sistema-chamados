@@ -7,3 +7,6 @@
 .checkline input{width:auto!important}
 .v121-config-links{margin-top:14px}
 .v121-config-links .btn{margin:4px}
+
+/* PATCH V12.2 */
+.perm-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px;margin:10px 0}.checkline{display:flex!important;align-items:center;gap:8px;background:#eef4ff;border:1px solid #c7d7f2;border-radius:10px;padding:8px;font-weight:800}.checkline input{width:auto!important}
