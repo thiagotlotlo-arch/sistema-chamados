@@ -220,3 +220,11 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Assinatura é gravada como dataUrl no app_state e não depende da pasta temporária uploads do Render.
 - Adicionada prévia da assinatura atual na tela de edição do usuário.
 - Demais funções mantidas sem alteração.
+
+## V20.9.9
+- Corrigido somente o isolamento entre logo da empresa e assinatura digital do usuário/analista.
+- Config salva logo própria da empresa em config.logoEmpresaLocal/logoEmpresaUrl.
+- Usuário salva assinatura própria em usuario.assinaturaUsuario/assinaturaDigital.
+- Editar usuário não altera logo da empresa.
+- Editar config não altera assinatura dos usuários.
+- Mantidas as demais funções.

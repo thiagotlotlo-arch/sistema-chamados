@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-9-8-assinatura-persistente",
-  "version": "20.9.8",
+  "name": "sistema-vestcasa-v20-9-9-logo-empresa-assinatura-separados",
+  "version": "20.9.9",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",
