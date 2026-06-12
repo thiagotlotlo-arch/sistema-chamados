@@ -214,3 +214,9 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Linha verde fica FINALIZADO quando o XLSX disponibiliza a cor.
 - Linhas mescladas/somente loja são ignoradas como chamado e usadas como loja corrente.
 - Deduplicação por número do chamado + loja, telefone sem máscara e nome normalizado.
+
+## V20.9.8
+- Corrigido salvamento persistente da assinatura digital do usuário/analista no Supabase.
+- Assinatura é gravada como dataUrl no app_state e não depende da pasta temporária uploads do Render.
+- Adicionada prévia da assinatura atual na tela de edição do usuário.
+- Demais funções mantidas sem alteração.
