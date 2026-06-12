@@ -190,3 +190,11 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Impressão de O.S. modelo VestCasa com logo da loja, WhatsApp e assinatura digital do analista.
 - Textos/digitação em maiúsculas e mobile compacto.
 - Inclui schema.sql e reset_banco_mantendo_config.sql.
+
+
+## V20.9.2
+- Botão WhatsApp responsável da loja restaurado na impressão da O.S.
+- Botões WhatsApp enviam mensagem com link da O.S. para baixar/imprimir como PDF.
+- Melhor busca de telefone/WhatsApp da loja e do prestador em vários campos.
+- Removida duplicidade de valores na impressão da O.S.
+- Mantido layout da tela e impressão da O.S.

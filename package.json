@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-9-1-ajustes-os-pdf-relatorios",
-  "version": "20.9.1",
+  "name": "sistema-vestcasa-v20-9-2-whatsapp-os-pdf",
+  "version": "20.9.2",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",
