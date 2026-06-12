@@ -207,29 +207,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Ação manual: POST /api/v2093/hidratar-imagens.
 
 
-## V20.9.4
-- Chamado rápido e chamado completo unificados em uma tela única de Novo Chamado.
-- Campos avançados ficam disponíveis apenas para usuários com permissão de tratativa/admin.
-- Botão pequeno "Sugerir" corrigido.
-- Sugestão automática de prestador por loja/cidade/UF/tipo de serviço.
-- Janela modal com prestadores disponíveis para a área.
-- Mantidas as demais funções e layouts existentes.
-
-## V20.9.5
-- Importação de planilha com deduplicação inteligente.
-- Loja é associada por código/filial, nome normalizado, cidade e UF.
-- Prestador é associado por telefone quando existir, senão por nome normalizado.
-- Chamados já existentes são ignorados pelo número + loja + prestador.
-- Nova importação verifica cadastros já existentes no sistema antes de criar.
-- Rota de manutenção: POST /manutencao/deduplicar-cadastros.
-
-
-## V20.9.6 - ajuste somente importação de planilha
-- Corrigido erro NEXTID IS NOT DEFINED na importação.
-- Importa colunas do modelo VestCasa: loja, número, data abertura, autorizado/aprovado, descrição, agendado, prestador, telefone, valor e pagamento/financeiro.
-- Usa linhas mescladas/títulos de loja apenas como loja corrente, sem criar chamado vazio.
-- Se a linha estiver verde na planilha, marca o chamado como FINALIZADO.
-- Se AGENDADO SERVIÇO tiver data, grava em dataAgendada; se tiver texto, grava em observações.
-- Pagamento é gravado como dataFinanceiro/dataPagamento.
-- Deduplicação por número de chamado + loja e prestador por telefone sem máscara/nome normalizado.
-- Nenhuma outra função do sistema foi alterada.
+## V20.9.7
+- Base retornada para V20.9.3 estável para preservar layouts e funções.
+- Corrigida somente a importação de planilha VestCasa.
+- Importa loja, número, data abertura, autorizado/aprovado, descrição, agendado, prestador, telefone, valor e pagamento/financeiro.
+- Linha verde fica FINALIZADO quando o XLSX disponibiliza a cor.
+- Linhas mescladas/somente loja são ignoradas como chamado e usadas como loja corrente.
+- Deduplicação por número do chamado + loja, telefone sem máscara e nome normalizado.
