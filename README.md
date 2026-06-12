@@ -222,3 +222,14 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Chamados já existentes são ignorados pelo número + loja + prestador.
 - Nova importação verifica cadastros já existentes no sistema antes de criar.
 - Rota de manutenção: POST /manutencao/deduplicar-cadastros.
+
+
+## V20.9.6 - ajuste somente importação de planilha
+- Corrigido erro NEXTID IS NOT DEFINED na importação.
+- Importa colunas do modelo VestCasa: loja, número, data abertura, autorizado/aprovado, descrição, agendado, prestador, telefone, valor e pagamento/financeiro.
+- Usa linhas mescladas/títulos de loja apenas como loja corrente, sem criar chamado vazio.
+- Se a linha estiver verde na planilha, marca o chamado como FINALIZADO.
+- Se AGENDADO SERVIÇO tiver data, grava em dataAgendada; se tiver texto, grava em observações.
+- Pagamento é gravado como dataFinanceiro/dataPagamento.
+- Deduplicação por número de chamado + loja e prestador por telefone sem máscara/nome normalizado.
+- Nenhuma outra função do sistema foi alterada.

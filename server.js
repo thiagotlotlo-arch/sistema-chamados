@@ -13,7 +13,7 @@ import WebSocket from "ws";
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);
 
-/* PATCH V20.9.5 - função de status fechado para evitar CLOSED IS NOT DEFINED */
+/* PATCH V20.9.6 - função de status fechado para evitar CLOSED IS NOT DEFINED */
 function closed(item){
   const s = String((item && (item.status || item.situacao || item.estado)) || item || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -22,7 +22,7 @@ function closed(item){
 }
 
 
-/* PATCH V20.9.5 - moeda BR correta: R$800,00 = 800.00 */
+/* PATCH V20.9.6 - moeda BR correta: R$800,00 = 800.00 */
 function v2088_moneyBR(v){
   if(v == null || v === '') return 0;
   if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -54,7 +54,7 @@ fs.mkdirSync(DATA_DIR,{recursive:true}); fs.mkdirSync(UPLOAD_DIR,{recursive:true
 const upload=multer({dest:UPLOAD_DIR,limits:{fileSize:30*1024*1024}});
 app.use(express.urlencoded({extended:true,limit:"50mb"}));
 
-/* PATCH V20.9.5 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
+/* PATCH V20.9.6 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
 function patchNomeLojaBody(req,res,next){
   try{
     if(req && req.body){
@@ -84,7 +84,7 @@ function now(){return new Date().toISOString()} function today(){return now().sl
 function dig(v){return String(v||'').replace(/\D/g,'')} function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function arr(v){return Array.isArray(v)?v:(v?[v]:[])} function money(v){return Number(String(v||0).replace(/[^\d,.-]/g,'').replace(',','.'))||0} function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} function br(v){const s=String(v||'').slice(0,10);const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s} function finalizado(s){return ['FINALIZADO','CANCELADO','FECHADO'].includes(norm(s))}
 
-/* PATCH V20.9.5 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
+/* PATCH V20.9.6 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
 function envTrim(name){ return String(process.env[name] || '').trim().replace(/^['\"]|['\"]$/g,''); }
 const SUPABASE_URL = envTrim('SUPABASE_URL') || envTrim('NEXT_PUBLIC_SUPABASE_URL');
 const SUPABASE_KEY = envTrim('SUPABASE_SERVICE_ROLE_KEY') || envTrim('SUPABASE_SERVICE_KEY') || envTrim('SUPABASE_KEY') || envTrim('SUPABASE_ANON_KEY');
@@ -126,7 +126,7 @@ async function initPersistentDB(){
   persistentCache = fallback;
   if(!supabasePersist){
     lastPersistError = 'SUPABASE NÃO CONFIGURADO. VERIFIQUE SUPABASE_URL E SUPABASE_SERVICE_ROLE_KEY NO RENDER.';
-    console.error('V20.9.5:', lastPersistError);
+    console.error('V20.9.6:', lastPersistError);
     return;
   }
   try{
@@ -136,23 +136,23 @@ async function initPersistentDB(){
       persistentCache = mergeDB(emptyDB(), data.data);
       fs.writeFileSync(DB_FILE, JSON.stringify(persistentCache,null,2),'utf8');
       supabaseOk = true; remoteLoaded = true; lastRemoteLoadAt = data.updated_at || new Date().toISOString(); lastPersistError='';
-      console.log('V20.9.5 carregado do Supabase app_state:', SUPABASE_STATE_ID);
+      console.log('V20.9.6 carregado do Supabase app_state:', SUPABASE_STATE_ID);
     }else{
       // Proteção: não apaga dados remotos nem força base vazia sem necessidade.
       if(dbHasRealData(fallback)){
         await saveRemoteNow(fallback);
-        console.log('V20.9.5 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
+        console.log('V20.9.6 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
       }else{
         const inicial = mergeDB(emptyDB(), {});
         persistentCache = inicial;
         await saveRemoteNow(inicial);
-        console.log('V20.9.5 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
+        console.log('V20.9.6 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
       }
       remoteLoaded = true;
     }
   }catch(e){
     supabaseOk = false; remoteLoaded = false; lastSaveOk = false; lastPersistError = e.message || String(e);
-    console.error('V20.9.5 ERRO SUPABASE:', lastPersistError);
+    console.error('V20.9.6 ERRO SUPABASE:', lastPersistError);
     console.error('IMPORTANTE: enquanto este erro existir, os dados ficam apenas temporários/local no Render. Rode o schema.sql e use SERVICE_ROLE_KEY.');
   }
 }
@@ -168,13 +168,13 @@ async function saveRemoteNow(d){
 function scheduleRemoteSave(d){
   persistentCache = mergeDB(emptyDB(), d);
   // Sempre grava JSON local também, mas fonte principal é Supabase.
-  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.5 erro JSON local:', e.message||e); }
+  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.6 erro JSON local:', e.message||e); }
   if(!supabasePersist){ lastSaveOk=false; lastPersistError='SUPABASE NÃO CONFIGURADO'; return; }
   if(savingRemote){ pendingRemote = true; return; }
   savingRemote = true;
   setTimeout(async()=>{
-    try{ await saveRemoteNow(persistentCache); console.log('V20.9.5 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
-    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.5 erro ao salvar Supabase:', lastPersistError); }
+    try{ await saveRemoteNow(persistentCache); console.log('V20.9.6 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
+    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.6 erro ao salvar Supabase:', lastPersistError); }
     finally{ savingRemote=false; if(pendingRemote){ pendingRemote=false; scheduleRemoteSave(persistentCache); } }
   }, 50);
 }
@@ -184,14 +184,14 @@ function save(d){ persistentCache=mergeDB(emptyDB(), hydratePersistentImages(d))
 function user(req){return req.session.user||null} function can(req,perm){const u=user(req); if(!u)return false; if(norm(u.usuario)==='OLITECH'||norm(u.perfil)==='ADMIN')return true; const d=load(); const uu=d.usuarios.find(x=>String(x.id)===String(u.id)||norm(x.usuario)===norm(u.usuario))||u; const pf=d.perfis.find(p=>norm(p.nome)===norm(uu.perfil)); const ps=[...arr(uu.permissoes),...arr(pf?.permissoes)].map(norm); return ps.includes('TODAS')||ps.includes(norm(perm))}
 function auth(req,res,nextfn){if(!user(req))return res.redirect('/login');nextfn()} function need(p){return (req,res,nextfn)=>can(req,p)?nextfn():res.status(403).send(page(req,'Sem permissão',`<div class="card"><h2>🚫 Sem permissão</h2><p>Permissão necessária: ${esc(p)}</p><a class="btn" href="/">🏠 Início</a></div>`))}
 
-/* PATCH V20.9.5 - LOGOS/ASSINATURAS PERSISTENTES NO SUPABASE */
+/* PATCH V20.9.6 - LOGOS/ASSINATURAS PERSISTENTES NO SUPABASE */
 function persistentFileObj(f){
   if(!f) return null;
   const o={original:f.originalname,path:'uploads/'+f.filename,filename:f.filename,mimetype:f.mimetype,size:f.size,at:now()};
   try{
     const mt=String(f.mimetype||'');
     if(mt.startsWith('image/')) o.dataUrl='data:'+mt+';base64,'+fs.readFileSync(f.path).toString('base64');
-  }catch(e){ console.error('V20.9.5 erro ao embutir imagem:', e.message||e); }
+  }catch(e){ console.error('V20.9.6 erro ao embutir imagem:', e.message||e); }
   return o;
 }
 function hydrateFileDataUrl(obj){
@@ -213,7 +213,7 @@ function hydratePersistentImages(d){ try{return hydrateFileDataUrl(d)}catch(e){r
 function fileObj(f){return persistentFileObj(f)} function oneFile(req,n){return fileObj(req.files?.[n]?.[0]||req.file)} function manyFiles(req,n){return (req.files?.[n]||[]).map(fileObj).filter(Boolean)} function publicFile(f){if(!f)return ''; if(typeof f==='string')return f; if(f.dataUrl)return f.dataUrl; return '/'+String(f.path||'').replace(/^\/+|\\/g,'/')} function appLogo(d){d=d||{};d.config=d.config||{};return publicFile(d.config.logoLocal)||d.config.logoUrl||d.config.logo||''}
 function menu(req){const items=[['/','🏠 Início','INICIO'],['/chamados','🎫 Chamados','CHAMADOS'],['/chamados-por-analista','👤 Chamados por Analista','CHAMADOS'],['/lojas','🏬 Lojas','LOJAS'],['/prestadores','🧰 Prestadores','PRESTADORES'],['/proprietarios','👥 Proprietários','PROPRIETARIOS'],['/lembretes','📌 Lembretes','LEMBRETES'],['/preventivas','🗓️ Preventivas','PREVENTIVAS'],['/os','📄 Ordens de Serviço','ORDENS_SERVICO'],['/importar-planilha','📥 Importar','IMPORTAR'],['/relatorios','📊 Relatórios','RELATORIOS'],['/ponto-horas','⏱️ Ponto/Horas','PONTO_HORAS'],['/config','⚙️ Config','CONFIG'],['/logout','🚪 Sair','INICIO']];return `<nav>${items.filter(i=>i[0]==='/logout'||can(req,i[2])).map(i=>`<a class="btn menu-btn" href="${i[0]}">${i[1]}</a>`).join('')}</nav>`}
 
-/* PATCH V20.9.5 - assinatura digital do analista na O.S. */
+/* PATCH V20.9.6 - assinatura digital do analista na O.S. */
 function v2088_publicImg(f){
   try{
     if(!f) return '';
@@ -255,7 +255,7 @@ function v2088_injetarAssinaturaOS(html,d,analista){
   }catch(e){ return html; }
 }
 
-function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.5</div><script src="/public/app.js"></script></body></html>`}
+function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.6</div><script src="/public/app.js"></script></body></html>`}
 function errorPage(req,e){console.error(e);return page(req,'Erro tratado',`<div class="card"><h2>⚠️ Erro tratado</h2><p>O sistema encontrou um erro nesta operação, mas não travou.</p><p><b>Detalhe:</b> ${esc(e?.message||String(e))}</p><a class="btn" href="/">🏠 Início</a> <a class="btn secondary" href="javascript:history.back()">↩️ Voltar</a></div>`)}
 function tabela(headers,rows,empty='Nenhum registro encontrado'){return `<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}">${esc(empty)}</td></tr>`}</tbody></table>`}
 function busca(action,ph){return `<form class="card search" method="get" action="${action}"><input name="q" placeholder="${esc(ph)}"><button>🔎 Buscar</button><a class="btn" href="${action}?mostrar=1">Mostrar todos</a><a class="btn secondary" href="${action}">Limpar</a></form>`}
@@ -292,7 +292,7 @@ function syncPreventiva(d,p){let l=d.lembretes.find(x=>String(x.preventivaId)===
 
 app.get('/login',(req,res)=>res.send(`<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login</title><link rel="stylesheet" href="/public/style.css"></head><body class="login-body"><form class="login-card" method="post"><div class="login-logo">VB</div><h1>V&B CHAMADOS</h1><label>Usuário<input name="usuario" autocomplete="username" autofocus></label><label>Senha<input type="password" name="senha" autocomplete="current-password"></label><label class="inline"><input type="checkbox" name="lembrar" value="SIM"> Salvar usuário</label><button>Entrar</button></form><script src="/public/app.js"></script></body></html>`));
 app.post('/login',(req,res)=>{const d=load();const u=d.usuarios.find(x=>norm(x.ativo||'SIM')!=='NÃO'&&norm(x.usuario)===norm(req.body.usuario)&&String(x.senha||'')===String(req.body.senha||''));if(!u)return res.send(page(req,'Login',`<div class="login-card"><p class="alert">Usuário ou senha inválidos.</p><a class="btn" href="/login">Tentar novamente</a></div>`));req.session.user={id:u.id,nome:u.nome,usuario:u.usuario,perfil:u.perfil,permissoes:u.permissoes||[]};res.redirect('/')}); app.get('/logout',(req,res)=>req.session.destroy(()=>res.redirect('/login')));
-/* PATCH V20.9.5 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
+/* PATCH V20.9.6 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
 app.get('/',auth,(req,res)=>{
   const d=load();
   const q=norm(req.query.q||'');
@@ -307,7 +307,7 @@ app.get('/',auth,(req,res)=>{
 function postit(l){const cor=norm(l.cor||'AMARELO').toLowerCase();const href=l.chamadoId?`/chamados/${l.chamadoId}/editar`:(l.preventivaId?`/preventivas/${l.preventivaId}/editar`:`/lembretes/${l.id}/editar`);return `<a class="postit ${cor}" href="${href}"><b>${esc(l.titulo)}</b><span>📅 ${br(l.data)} ${esc(l.hora||'')}</span><small>${esc(l.descricao||'')}</small></a>`}
 
 app.get('/api/autocomplete',auth,(req,res)=>{const d=load(),tipo=norm(req.query.tipo||'GERAL'),q=norm(req.query.q||''),di=dig(req.query.q||'');if(q.length<2&&di.length<2)return res.json({ok:true,items:[]});const items=[];const add=(tipo,id,label,value,sub,raw)=>items.push({tipo,id,label,value,sub,raw});if(['LOJAS','GERAL'].includes(tipo))d.lojas.forEach(l=>add('loja',l.id,l.nome,l.nome,[l.codigo,l.cidade,l.uf,l.cnpj,l.cep].filter(Boolean).join(' | '),l));if(['PRESTADORES','GERAL'].includes(tipo))d.prestadores.forEach(p=>add('prestador',p.id,p.empresa||p.responsavel,p.empresa||p.responsavel,[p.responsavel,p.cidade,p.uf,p.cnpj,(p.servicos||[]).join(',')].filter(Boolean).join(' | '),p));if(['PROPRIETARIOS','GERAL'].includes(tipo))d.proprietarios.forEach(p=>add('proprietario',p.id,p.nome,p.nome,[p.cidade,p.uf,p.cnpj,p.cpf].filter(Boolean).join(' | '),p));if(['ANALISTAS','USUARIOS','GERAL'].includes(tipo))d.usuarios.filter(u=>norm(u.ativo)!=='NÃO').forEach(u=>add('usuario',u.id,u.nome||u.usuario,u.nome||u.usuario,[u.usuario,u.perfil].filter(Boolean).join(' | '),u));if(['CHAMADOS','GERAL'].includes(tipo))d.chamados.forEach(c=>add('chamado',c.id,`${c.numeroInterno||c.id} - ${c.lojaNome||''}`,String(c.numeroInterno||c.id),[c.prestadorNome,c.status,c.tipoServico].filter(Boolean).join(' | '),c));if(['SERVICOS','GERAL'].includes(tipo))d.tiposServico.forEach(s=>add('servico',s,s,s,'Tipo de serviço',{nome:s}));const ok=items.filter(x=>norm([x.label,x.sub,JSON.stringify(x.raw)].join(' ')).includes(q)||di&&dig([x.label,x.sub].join(' ')).includes(di)).slice(0,40);res.json({ok:true,items:ok})});
-app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.5'}));
+app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.6'}));
 
 app.get('/config',auth,need('CONFIG'),(req,res)=>{const d=load(),c=d.config;res.send(page(req,'Config',`<section class="card"><h2>⚙️ Configurações</h2><form method="post" enctype="multipart/form-data" class="form"><div class="grid4"><label>Nome sistema<input name="nomeSistema" value="${esc(c.nomeSistema)}"></label><label>Subtítulo<input name="subtitulo" value="${esc(c.subtitulo)}"></label><label>Tema<select name="tema">${['VERDE','AZUL','ESCURO','ROXO','LARANJA'].map(t=>`<option ${norm(c.tema)===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Logo URL<input name="logoUrl" value="${esc(c.logoUrl)}"></label><label>Logo local<input type="file" name="logoLocal" accept="image/*"></label>${appLogo(d)?`<label>Logo atual<div class="logo-preview"><img src="${esc(appLogo(d))}" onerror="this.style.display='none'"></div></label>`:''}<label>Logo da O.S.<select name="usarLogoLojaOS"><option value="SIM" ${c.usarLogoLojaOS!=='NAO'?'selected':''}>REUTILIZAR LOGO DA LOJA</option><option value="NAO" ${c.usarLogoLojaOS==='NAO'?'selected':''}>USAR LOGO DA EMPRESA</option></select></label><label>Filial / nomes repetidos<select name="regraNomeFilial"><option value="ORIGINAL" ${c.regraNomeFilial==='ORIGINAL'?'selected':''}>ORIGINAL</option><option value="MESCLAR_NOME_CIDADE_UF" ${c.regraNomeFilial!=='ORIGINAL'?'selected':''}>MESCLAR NOME + CIDADE + UF</option></select></label></div><button>💾 Salvar</button></form></section><section class="card"><h2>Cadastros de apoio</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a><a class="btn" href="/perfis">🔐 Perfis/Permissões</a><a class="btn" href="/backup">💾 Backup/Restauração</a><a class="btn" href="/tipos-servico">🛠️ Tipos de serviço</a><a class="btn" href="/diagnostico">🩺 Diagnóstico</a></section>`))});
 app.post('/config',auth,need('CONFIG'),upload.single('logoLocal'),(req,res)=>{const d=load();Object.assign(d.config,{nomeSistema:norm(req.body.nomeSistema||d.config.nomeSistema),subtitulo:norm(req.body.subtitulo||d.config.subtitulo),tema:norm(req.body.tema||d.config.tema),logoUrl:(req.body.logoUrl||'').trim(),regraNomeFilial:req.body.regraNomeFilial||'ORIGINAL',usarLogoLojaOS:req.body.usarLogoLojaOS||d.config.usarLogoLojaOS||'SIM'});if(req.file)d.config.logoLocal=fileObj(req.file);save(d);res.redirect('/config')});
@@ -340,7 +340,7 @@ const avancadoHtml=avancado?`<label>Tipo número<select name="tipoNumero"><optio
 return page(req,edit?'Editar chamado':'Novo chamado',`<div class="bar"><h2>🎫 ${edit?'Editar':'Novo'} chamado</h2><a class="btn secondary" href="/chamados">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data">${hiddenAdvanced}<div class="grid4"><label>Loja<input name="lojaNome" value="${esc(c.lojaNome)}" data-auto="lojas" required placeholder="DIGITE 2 LETRAS PARA BUSCAR"></label><label>Tipo serviço<select name="tipoServicoTela" id="tipoServicoTela" ${avancado?'onchange="document.querySelector(`[name=tipoServico]`).value=this.value"':''}>${servicos}</select>${avancado?'':`<input type="hidden" name="tipoServico" id="tipoServico" value="${esc(c.tipoServico||'A DEFINIR')}">`}</label>${avancado?`<input type="hidden" name="tipoServico" id="tipoServico" value="${esc(c.tipoServico||'A DEFINIR')}">`:''}${avancadoHtml}</div><label>Descrição serviços<textarea name="descricao" required rows="5">${esc(c.descricao)}</textarea></label><label>Observações<textarea name="observacoes" rows="4">${esc(c.observacoes)}</textarea></label><label>Anexos/imagens<input type="file" name="anexos" multiple></label><div class="actions">${avancado?`<button type="button" id="btnSugestao">🎯 SUGERIR PRESTADOR</button><a class="btn secondary" href="/tipos-servico">🛠️ TIPOS DE SERVIÇO</a>`:''}<button>💾 SALVAR</button>${edit?`<a class="btn" href="/os/nova?q=${encodeURIComponent(c.numeroInterno||c.id)}">📄 GERAR O.S.</a>`:''}</div><div id="sugestoes" class="hint"></div><dialog id="modalPrestadores" class="modal"><h3>🎯 PRESTADORES DISPONÍVEIS</h3><div id="modalPrestadoresLista"></div><div class="actions"><button type="button" onclick="document.getElementById('modalPrestadores').close()">FECHAR</button></div></dialog></form>`);
 }
 
-/* PATCH V20.9.5 - URL segura para imagens/assinaturas */
+/* PATCH V20.9.6 - URL segura para imagens/assinaturas */
 function os2091PublicPath(v){
   if(!v) return '';
   if(typeof v === 'object') v = v.url || v.path || v.filename || v.dataUrl || '';
@@ -360,7 +360,7 @@ function os83Assinatura(d,req,chamados){
 }
 function os83WhatsappLink(tel,msg){ const n=dig(tel); return n?`https://wa.me/55${n}?text=${encodeURIComponent(msg)}`:''; }
 
-/* PATCH V20.9.5 - WHATSAPP LOJA/PRESTADOR COM LINK DA O.S. PARA PDF */
+/* PATCH V20.9.6 - WHATSAPP LOJA/PRESTADOR COM LINK DA O.S. PARA PDF */
 function os2092Phone(obj){
   obj=obj||{};
   return obj.whatsappResponsavel || obj.whatsapp_responsavel || obj.whatsappResponsavelLoja || obj.whatsapp_loja || obj.whatsapp || obj.celular || obj.telefoneResponsavel || obj.telefone_responsavel || obj.telefone || obj.fone || '';
@@ -564,7 +564,7 @@ function v158_excelDate(v){
 }
 function v158_clone(v){return JSON.parse(JSON.stringify(v??null))}
 function v158_atomicSave(d){
-  // PATCH V20.9.5: importação precisa salvar pela função oficial save(),
+  // PATCH V20.9.6: importação precisa salvar pela função oficial save(),
   // pois ela atualiza cache em memória e envia para Supabase.
   try{
     if(typeof save === 'function'){
@@ -572,7 +572,7 @@ function v158_atomicSave(d){
       return true;
     }
   }catch(e){
-    console.error('V20.9.5 erro save importação:', e.message || e);
+    console.error('V20.9.6 erro save importação:', e.message || e);
   }
   const tmp=DB_FILE+'.tmp';
   fs.writeFileSync(tmp, JSON.stringify(d,null,2),'utf8');
@@ -608,18 +608,68 @@ function v158_findOrCreatePrestador(d, nome, telefone, tipo){
   if(tipo&&!v158_arr(p.servicos).map(v158_norm).includes(v158_norm(tipo)))p.servicos=[...v158_arr(p.servicos),v158_norm(tipo)];
   return {prestador:p,criada};
 }
+
+/* PATCH V20.9.6 - LEITURA DE PLANILHA VESTCASA COM CORES/DATAS */
+function v2096_cellRaw(ws,r,c){
+  const cell=ws[XLSX.utils.encode_cell({r,c})];
+  if(!cell) return '';
+  if(cell.v instanceof Date) return cell.v;
+  if(cell.t==='d') return cell.v;
+  return cell.w!==undefined && cell.w!==null && cell.w!=='' ? cell.w : (cell.v!==undefined?cell.v:'');
+}
+function v2096_rgb(cell){
+  try{
+    const f=cell&&cell.s&&cell.s.fill;
+    const c=(f&& (f.fgColor||f.bgColor)) || {};
+    return String(c.rgb||c.indexed||c.theme||'').toUpperCase();
+  }catch(e){return ''}
+}
+function v2096_isGreenRgb(rgb){
+  rgb=String(rgb||'').toUpperCase();
+  return rgb.includes('92D050') || rgb.includes('00B050') || rgb.includes('C6EFCE') || rgb.includes('008000') || rgb==='50' || rgb==='4';
+}
+function v2096_isYellowRgb(rgb){
+  rgb=String(rgb||'').toUpperCase();
+  return rgb.includes('FFFF00') || rgb.includes('FFC000') || rgb.includes('FFEB9C') || rgb==='13';
+}
+function v2096_rowColor(ws,r,range){
+  let green=0,yellow=0,filled=0;
+  const end=Math.min(range.e.c, 13);
+  for(let c=0;c<=end;c++){
+    const cell=ws[XLSX.utils.encode_cell({r,c})];
+    if(!cell) continue;
+    const rgb=v2096_rgb(cell);
+    if(rgb) filled++;
+    if(v2096_isGreenRgb(rgb)) green++;
+    if(v2096_isYellowRgb(rgb)) yellow++;
+  }
+  return {green,yellow,filled,isGreen:green>=3 && green>=yellow,isYellow:yellow>=2};
+}
+function v2096_isDateLike(v){ return !!v158_excelDate(v); }
+
 function v158_buildRows(filePath){
-  const wb=XLSX.readFile(filePath,{cellDates:true,cellStyles:false,cellNF:false,bookVBA:false});
+  const wb=XLSX.readFile(filePath,{cellDates:true,cellStyles:true,cellNF:false,bookVBA:false});
   const ws=wb.Sheets['CHAMADOS']||wb.Sheets[wb.SheetNames[0]];
-  const rows=XLSX.utils.sheet_to_json(ws,{header:1,defval:'',raw:false,blankrows:false});
-  let headerIndex=rows.findIndex(r=>{const a=(r||[]).map(v158_norm);return a.includes('LOJA')&&a.some(x=>x.includes('DESCRI'))});
-  if(headerIndex<0) headerIndex=rows.findIndex(r=>(r||[]).map(v158_norm).some(x=>x.includes('LOJA')));
+  const ref=ws['!ref'];
+  if(!ref) return {headers:[],dataRows:[]};
+  const range=XLSX.utils.decode_range(ref);
+  const rows=[];
+  for(let r=range.s.r;r<=range.e.r;r++){
+    const row=[];
+    for(let c=range.s.c;c<=range.e.c;c++) row.push(v2096_cellRaw(ws,r,c));
+    const cor=v2096_rowColor(ws,r,range);
+    row.__rowNum=r+1; row.__isGreen=cor.isGreen; row.__isYellow=cor.isYellow;
+    rows.push(row);
+  }
+  let headerIndex=rows.findIndex(r=>{const a=(r||[]).map(v158_norm);return a.includes('LOJA')&&a.some(x=>x.includes('DESCRI'))&&a.some(x=>x.includes('PRESTADOR'));});
+  if(headerIndex<0) headerIndex=rows.findIndex(r=>(r||[]).map(v158_norm).some(x=>x==='LOJA'));
   if(headerIndex<0) headerIndex=0;
   const headers=(rows[headerIndex]||[]).map(v158_norm);
-  return {headers, dataRows:rows.slice(headerIndex+1)};
+  const dataRows=rows.slice(headerIndex+1).filter(r=>r.some(v=>String(v||'').trim()!==''));
+  return {headers,dataRows};
 }
 
-/* PATCH V20.9.5 - DEDUPLICAÇÃO INTELIGENTE NA IMPORTAÇÃO */
+/* PATCH V20.9.6 - DEDUPLICAÇÃO INTELIGENTE NA IMPORTAÇÃO */
 function v2095_keyName(v){
   return norm(v).replace(/\b(LTDA|ME|EPP|EIRELI|S\/A|SA|SERVICOS|SERVIÇOS|COMERCIO|COMÉRCIO|MANUTENCAO|MANUTENÇÃO)\b/g,'').replace(/[^A-Z0-9]+/g,' ').trim();
 }
@@ -694,7 +744,7 @@ function v2095_findLoja(d,nome,cidade,uf,cep,endereco,analista,codigo){
     v2095_mergeLoja(loja,{nome,nomeLoja:nome,cidade,uf,cep,endereco,analista,codigo});
     return {loja, criada:false};
   }
-  const id=nextId(d,'loja');
+  const id=v2096_nextId(d,'loja');
   loja={id,codigo:codigo||String(id),nome,nomeLoja:nome,cidade:v158_norm(cidade),uf:v158_norm(uf),cep:dig(cep),endereco:v158_norm(endereco),analista:v158_norm(analista)};
   d.lojas.push(loja);
   return {loja, criada:true};
@@ -714,7 +764,7 @@ function v2095_findPrestador(d,nome,tel,tipo,cidade,uf){
     v2095_mergePrestador(p,{nome,empresa:nome,telefone:tel,whatsapp:tel,tipoServico:tipo,servicos:[tipo],cidade,uf});
     return {prestador:p, criada:false};
   }
-  p={id:nextId(d,'prestador'),nome,empresa:nome,telefone:tel,whatsapp:tel,servicos:[v158_norm(tipo||'IMPORTADO')],tipoServico:v158_norm(tipo||'IMPORTADO'),ativo:'SIM',cidade:v158_norm(cidade),uf:v158_norm(uf)};
+  p={id:v2096_nextId(d,'prestador'),nome,empresa:nome,telefone:tel,whatsapp:tel,servicos:[v158_norm(tipo||'IMPORTADO')],tipoServico:v158_norm(tipo||'IMPORTADO'),ativo:'SIM',cidade:v158_norm(cidade),uf:v158_norm(uf)};
   d.prestadores.push(p);
   return {prestador:p, criada:true};
 }
@@ -732,6 +782,35 @@ function v2095_chamadoExiste(d, numero, lojaNome, prestNome){
   });
 }
 
+
+/* PATCH V20.9.6 - REGRAS DE IMPORTAÇÃO EXCEL VESTCASA */
+function v2096_idx(headers, opts, fallback){
+  const i=v158_headerIndex(headers,opts);
+  return i>=0?i:fallback;
+}
+function v2096_agendamento(v){
+  const dt=v158_excelDate(v);
+  const txt=v158_norm(v);
+  return {data:dt||'', texto:dt?'':txt};
+}
+function v2096_statusLinha(r, ag){
+  const a=v158_norm(ag && (ag.texto||ag.data));
+  if(r.__isGreen || a.includes('FINALIZ')) return 'FINALIZADO';
+  if(r.__isYellow || a.includes('AGUARDANDO') || a.includes('FALTOU') || a.includes('EMERGENCIA') || a.includes('ENCAMINHADO')) return 'EM ANDAMENTO';
+  return 'ABERTO';
+}
+function v2096_chamadoDuplicado(d, numero, lojaNome){
+  const n=v2095_num(numero);
+  if(!n) return false;
+  const lk=v2095_keyName(lojaNome);
+  return (d.chamados||[]).some(c=>{
+    const cn=v2095_num(c.numeroInterno||c.numero||c.numeroExterno||c.id);
+    if(cn!==n) return false;
+    const cl=v2095_keyName(c.lojaNome||c.loja);
+    return !lk || !cl || lk===cl;
+  });
+}
+
 function v158_importCore(req, file){
   const original=load();
   const keep={usuarios:v158_clone(original.usuarios||[]),perfis:v158_clone(original.perfis||[]),permissoes:v158_clone(original.permissoes||[]),config:v158_clone(original.config||{})};
@@ -739,40 +818,88 @@ function v158_importCore(req, file){
   const d=v2095_dedupeBase(v158_clone(original));
   d.lojas=Array.isArray(d.lojas)?d.lojas:[]; d.prestadores=Array.isArray(d.prestadores)?d.prestadores:[]; d.chamados=Array.isArray(d.chamados)?d.chamados:[]; d.config=d.config||{}; d.config.next=d.config.next||{};
   const {headers,dataRows}=v158_buildRows(file.path);
-  const iLoja=v158_headerIndex(headers,['LOJA','NOME LOJA','FILIAL','UNIDADE','CLIENTE','LOCAL']);
-  const iNum=v158_headerIndex(headers,['NUMERO','NÚMERO','NRO','CHAMADO','OS','ID','CODIGO']);
-  const iData=v158_headerIndex(headers,['DATA','ABERTURA']);
-  const iDesc=v158_headerIndex(headers,['DESCRI','PROBLEMA','SOLICITA','OBSERVA']);
-  const iPrest=v158_headerIndex(headers,['PRESTADOR','FORNECEDOR','EXECUTOR','TECNICO','TÉCNICO']);
-  const iTel=v158_headerIndex(headers,['TELEFONE','CELULAR']);
-  const iVal=v158_headerIndex(headers,['VALOR','PRECO','PREÇO','CUSTO']);
-  const iAgenda=v158_headerIndex(headers,['AGENDADO','AGENDADA','DATA AGEND']);
-  const iPrior=v158_headerIndex(headers,['PRIORIDADE']);
-  const iStatus=v158_headerIndex(headers,['STATUS','SITUACAO','SITUAÇÃO']);
-  const iServ=v158_headerIndex(headers,['SERVICO','SERVIÇO','TIPO','CATEGORIA']);
+  const iLoja=v2096_idx(headers,['LOJA','NOME LOJA','FILIAL','UNIDADE','CLIENTE','LOCAL'],0);
+  const iNum=v2096_idx(headers,['NUMERO','NÚMERO','NRO','CHAMADO','OS','ID','CODIGO'],1);
+  const iData=v2096_idx(headers,['DATA','ABERTURA'],2);
+  const iPrior=v2096_idx(headers,['PRIORIDADE','PRIORIDA'],3);
+  const iAut=v2096_idx(headers,['AUTORIZADO','APROVADO','DATA APROVA','APROVAÇÃO','APROVACAO'],4);
+  const iDesc=v2096_idx(headers,['DESCRI','PROBLEMA','SOLICITA'],6);
+  const iConversa=v2096_idx(headers,['DATA CONVERSA','CONVERSA'],7);
+  const iAgenda=v2096_idx(headers,['AGENDADO SERVICO','AGENDADO SERVIÇO','AGENDADO','AGENDADA','DATA AGEND'],8);
+  const iPrest=v2096_idx(headers,['PRESTADOR','FORNECEDOR','EXECUTOR','TECNICO','TÉCNICO'],9);
+  const iTel=v2096_idx(headers,['TELEFONE','CELULAR','WHATSAPP'],10);
+  const iVal=v2096_idx(headers,['VALOR','PRECO','PREÇO','CUSTO'],11);
+  const iPagamento=v2096_idx(headers,['PAGAMENTO','FINANCEIRO','ENVIADO FINANCEIRO'],12);
   const iCidade=v158_headerIndex(headers,['CIDADE','MUNICIPIO','MUNICÍPIO']);
   const iUf=v158_headerIndex(headers,['UF','ESTADO']);
   const iCep=v158_headerIndex(headers,['CEP']);
   const iEnd=v158_headerIndex(headers,['ENDERECO','ENDEREÇO','LOGRADOURO','RUA']);
-  let importados=0, lojasCriadas=0, prestCriados=0, ignoradas=0;
+  let importados=0, lojasCriadas=0, prestCriados=0, ignoradas=0, duplicados=0;
   const analista=v158_norm(req.body.analista||((user(req)||{}).nome)||'');
+  let lojaAtual='';
   for(const r of dataRows){
-    const lojaNome=v158_norm(v158_getCell(r,iLoja));
-    const desc=v158_norm(v158_getCell(r,iDesc));
+    const rawLoja=v158_norm(v158_getCell(r,iLoja));
     const numero=v158_dig(v158_getCell(r,iNum));
-    if((!lojaNome && !desc && !numero) || lojaNome.includes('TOTAL') || lojaNome.includes('GASTOS')){ignoradas++; continue;}
-    const tipo=v158_norm(v158_getCell(r,iServ))||'IMPORTADO';
-    const li=v2095_findLoja(d,lojaNome||'LOJA NAO INFORMADA',v158_getCell(r,iCidade),v158_getCell(r,iUf),v158_getCell(r,iCep),v158_getCell(r,iEnd),analista,v158_getCell(r,iLoja)); if(li.criada)lojasCriadas++;
-    const pi=v2095_findPrestador(d,v158_getCell(r,iPrest),v158_getCell(r,iTel),tipo,v158_getCell(r,iCidade),v158_getCell(r,iUf)); if(pi.criada)prestCriados++;
-    d.chamados.push({id:next(d,'chamado'),numeroInterno:numero||next(d,'numeroChamado'),numeroExterno:numero,lojaId:li.loja.id,lojaNome:li.loja.nome,prestadorId:pi.prestador?.id||'',prestadorNome:v158_norm(v158_getCell(r,iPrest)),tipoServico:tipo,descricao:desc||'IMPORTADO SEM DESCRICAO',telefone:v158_dig(v158_getCell(r,iTel)),valor:v158_money(v158_getCell(r,iVal)),status:v158_norm(v158_getCell(r,iStatus))||'AGUARDANDO',prioridade:v158_norm(v158_getCell(r,iPrior))||'MEDIA',analista,dataAbertura:v158_excelDate(v158_getCell(r,iData))||today(),dataAgendada:v158_excelDate(v158_getCell(r,iAgenda)),abertoPor:(user(req)||{}).nome||'',criadoEm:now(),importado:'SIM'});
+    const desc=v158_norm(v158_getCell(r,iDesc));
+    const prestNome=v158_norm(v158_getCell(r,iPrest));
+    const telefone=v158_dig(v158_getCell(r,iTel));
+    const valor=v158_money(v158_getCell(r,iVal));
+    const ag=v2096_agendamento(v158_getCell(r,iAgenda));
+    const pagamento=v158_excelDate(v158_getCell(r,iPagamento));
+    const autorizado=v158_excelDate(v158_getCell(r,iAut));
+    const dataAbertura=v158_excelDate(v158_getCell(r,iData));
+    const dataConversa=v158_excelDate(v158_getCell(r,iConversa));
+    // linhas de título/loja mesclada: usa como loja corrente, mas não importa chamado
+    if(rawLoja && !numero && !desc && !prestNome && !telefone && !valor){ lojaAtual=rawLoja; ignoradas++; continue; }
+    const lojaNome=rawLoja || lojaAtual;
+    if(!numero || (!lojaNome && !desc && !prestNome)) { ignoradas++; continue; }
+    if(v158_norm(lojaNome).includes('TOTAL') || v158_norm(lojaNome).includes('GASTOS')) { ignoradas++; continue; }
+    if(v2096_chamadoDuplicado(d, numero, lojaNome)){ duplicados++; ignoradas++; continue; }
+    const tipo='IMPORTADO';
+    const li=v2095_findLoja(d,lojaNome||'LOJA NAO INFORMADA',v158_getCell(r,iCidade),v158_getCell(r,iUf),v158_getCell(r,iCep),v158_getCell(r,iEnd),analista,''); if(li.criada)lojasCriadas++;
+    const pi=v2095_findPrestador(d,prestNome,telefone,tipo,v158_getCell(r,iCidade),v158_getCell(r,iUf)); if(pi.criada)prestCriados++;
+    const status=v2096_statusLinha(r,ag);
+    const obs=[];
+    if(ag.texto) obs.push('AGENDADO SERVIÇO: '+ag.texto);
+    if(dataConversa) obs.push('DATA CONVERSA: '+dataConversa);
+    if(pagamento) obs.push('ENVIADO AO FINANCEIRO/PAGAMENTO: '+pagamento);
+    d.chamados.push({
+      id:next(d,'chamado'),
+      numeroInterno:numero,
+      numeroExterno:numero,
+      lojaId:li.loja.id,
+      lojaNome:li.loja.nome||lojaNome,
+      prestadorId:pi.prestador?.id||'',
+      prestadorNome:prestNome,
+      tipoServico:tipo,
+      descricao:desc||'IMPORTADO SEM DESCRICAO',
+      telefone,
+      valor,
+      status,
+      prioridade:v158_norm(v158_getCell(r,iPrior))||'MÍNIMA',
+      analista,
+      dataAbertura:dataAbertura||today(),
+      dataAutorizado:autorizado,
+      dataAprovacao:autorizado,
+      dataOrcamento:autorizado,
+      dataConversa,
+      dataAgendada:ag.data,
+      agendadoTexto:ag.texto,
+      dataFinanceiro:pagamento,
+      dataPagamento:pagamento,
+      observacoes:obs.join(' | '),
+      abertoPor:(user(req)||{}).nome||'',
+      criadoEm:now(),
+      importado:'SIM',
+      linhaPlanilha:r.__rowNum||''
+    });
     importados++;
   }
   d.usuarios=keep.usuarios; d.perfis=keep.perfis; if(keep.permissoes)d.permissoes=keep.permissoes; d.config={...keep.config,...(d.config||{}),next:{...((keep.config||{}).next||{}),...((d.config||{}).next||{})}};
   v2095_dedupeBase(d);
   v158_atomicSave(d);
-  // PATCH V20.9.5: garante que a busca logo após importar leia os dados importados.
   try{ persistentCache = mergeDB(emptyDB(), d); }catch(e){}
-  return {importados,lojasCriadas,prestCriados,ignoradas, lojasNoSistema:(d.lojas||[]).length, prestadoresNoSistema:(d.prestadores||[]).length};
+  return {importados,lojasCriadas,prestCriados,ignoradas,duplicados, lojasNoSistema:(d.lojas||[]).length, prestadoresNoSistema:(d.prestadores||[]).length};
 }
 function v158_uploadMiddleware(req,res,nextfn){
   upload.fields([{name:'arquivo',maxCount:1},{name:'excel',maxCount:1}])(req,res,function(err){
@@ -792,7 +919,7 @@ function v158_handleImport(req,res){
   try{
     if(!req.file) return res.status(200).send(v158_importPage(req,'<h3>⚠️ Nenhum arquivo selecionado.</h3>'));
     const r=v158_importCore(req,req.file);
-    res.status(200).send(v158_safePage(req,'Importado',`<div class="card"><h2>✅ Importação concluída</h2><p>Chamados importados: <b>${r.importados}</b></p><p>Lojas criadas: <b>${r.lojasCriadas}</b> | Prestadores criados: <b>${r.prestCriados}</b> | Linhas ignoradas: <b>${r.ignoradas}</b></p><p><b>Proteção:</b> usuários, analistas, perfis e permissões foram preservados.</p><a class="btn" href="/chamados?mostrar=1">Ver chamados</a><a class="btn secondary" href="/importar-planilha">Nova importação</a></div>`));
+    res.status(200).send(v158_safePage(req,'Importado',`<div class="card"><h2>✅ Importação concluída</h2><p>Chamados importados: <b>${r.importados}</b></p><p>Lojas criadas: <b>${r.lojasCriadas}</b> | Prestadores criados: <b>${r.prestCriados}</b> | Linhas ignoradas/duplicadas: <b>${r.ignoradas}</b> | Duplicados: <b>${r.duplicados||0}</b></p><p><b>Proteção:</b> usuários, analistas, perfis e permissões foram preservados.</p><a class="btn" href="/chamados?mostrar=1">Ver chamados</a><a class="btn secondary" href="/importar-planilha">Nova importação</a></div>`));
   }catch(e){
     console.error('ERRO IMPORTAÇÃO V16.1', e);
     return res.status(200).send(v158_importPage(req,`<h3>⚠️ Erro ao importar</h3><p>${esc(e.message||String(e))}</p><p>Nada foi salvo. O backup anterior foi preservado.</p>`));
@@ -1778,12 +1905,12 @@ app.get("/chamados/:id/os", auth, (req,res)=>res.redirect(`/os/${req.params.id}/
 
 app.get('/api/v2084/status', auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,versao:'V20.9.5',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
+  res.json({ok:true,versao:'V20.9.6',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
 });
 
 
 
-/* PATCH V20.9.5 - diagnóstico de importação/persistência */
+/* PATCH V20.9.6 - diagnóstico de importação/persistência */
 app.get('/api/v2087/status', auth, async (req,res)=>{
   try{
     const local = load();
@@ -1797,7 +1924,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
     }
     res.json({
       ok:true,
-      versao:'20.9.5',
+      versao:'20.9.6',
       supabaseConfigurado: !!(typeof supabasePersist !== 'undefined' && supabasePersist),
       erroRemoto,
       local:{
@@ -1820,7 +1947,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.9.5 - STATUS E REPARO */
+/* PATCH V20.9.6 - STATUS E REPARO */
 app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (req,res)=>{
   const d=load();
   let remoto=null, erroRemoto='';
@@ -1832,7 +1959,7 @@ app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (
     }
   }catch(e){ erroRemoto=e.message||String(e); }
   res.json({
-    ok:true, version:'V20.9.5',
+    ok:true, version:'V20.9.6',
     supabaseConfigurado:!!supabasePersist, supabaseOk, remoteLoaded, lastSaveOk, lastSaveAt, lastRemoteLoadAt, erro:lastPersistError || erroRemoto,
     local:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length},
     remoto: remoto&&remoto.data ? {updated_at:remoto.updated_at, usuarios:(remoto.data.usuarios||[]).length, lojas:(remoto.data.lojas||[]).length, prestadores:(remoto.data.prestadores||[]).length, proprietarios:(remoto.data.proprietarios||[]).length, chamados:(remoto.data.chamados||[]).length, os:(remoto.data.os||[]).length} : null
@@ -1844,7 +1971,7 @@ app.post('/api/v2090/force-save', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.9.5 - diagnóstico e hidratação manual de imagens */
+/* PATCH V20.9.6 - diagnóstico e hidratação manual de imagens */
 app.post('/api/v2093/hidratar-imagens', auth, async (req,res)=>{
   try{
     const d=hydratePersistentImages(load());
@@ -1859,11 +1986,11 @@ app.get('/api/v2093/status', auth, (req,res)=>{
   const logosData=(d.lojas||[]).filter(l=>l.logoLocal&&l.logoLocal.dataUrl).length;
   const ass=(d.usuarios||[]).filter(u=>u.assinatura||u.assinaturaDigital||u.assinaturaLocal).length;
   const assData=(d.usuarios||[]).filter(u=>(u.assinatura&&u.assinatura.dataUrl)||(u.assinaturaDigital&&u.assinaturaDigital.dataUrl)||(u.assinaturaLocal&&u.assinaturaLocal.dataUrl)).length;
-  res.json({ok:true,versao:'V20.9.5',logosComArquivo:logos,logosComDataUrl:logosData,assinaturasComArquivo:ass,assinaturasComDataUrl:assData,lastSaveOk,lastSaveAt,erro:lastPersistError});
+  res.json({ok:true,versao:'V20.9.6',logosComArquivo:logos,logosComDataUrl:logosData,assinaturasComArquivo:ass,assinaturasComDataUrl:assData,lastSaveOk,lastSaveAt,erro:lastPersistError});
 });
 
 
-/* PATCH V20.9.5 - DEDUPLICAR CADASTROS EXISTENTES */
+/* PATCH V20.9.6 - DEDUPLICAR CADASTROS EXISTENTES */
 app.post('/manutencao/deduplicar-cadastros', auth, (req,res)=>{
   if(!can(req,'CONFIG')) return res.status(403).send('SEM PERMISSÃO');
   const d=load();
@@ -1879,7 +2006,7 @@ app.use((err,req,res,nextfn)=>res.status(500).send(errorPage(req,err)));
 
 app.get(['/api/v2085/status','/api/persist-status'], auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,version:'V20.9.5',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
+  res.json({ok:true,version:'V20.9.6',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
 });
 app.post('/api/v2085/force-save', auth, async (req,res)=>{
   try{ await saveRemoteNow(load()); res.json({ok:true,lastSaveAt,erro:''}); }
@@ -1887,4 +2014,8 @@ app.post('/api/v2085/force-save', auth, async (req,res)=>{
 });
 
 await initPersistentDB();
-app.listen(PORT,()=>console.log('V&B Chamados V20.9.5 rodando na porta '+PORT));
+app.listen(PORT,()=>console.log('V&B Chamados V20.9.6 rodando na porta '+PORT))
+/* PATCH V20.9.6 - ALIAS DE ID SEGURO PARA IMPORTAÇÃO */
+function v2096_nextId(d,k){ return (typeof next==='function') ? next(d,k) : ((d.config=d.config||{}, d.config.next=d.config.next||{}, d.config.next[k]=(Number(d.config.next[k]||1)+1), d.config.next[k]-1)); }
+
+;

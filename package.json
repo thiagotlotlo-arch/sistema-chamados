@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-9-5-importacao-sem-duplicidade",
-  "version": "20.9.5",
+  "name": "sistema-vestcasa-v20-9-6-importacao-planilha-vestcasa-fix",
+  "version": "20.9.6",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",
