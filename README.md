@@ -228,3 +228,12 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Editar usuário não altera logo da empresa.
 - Editar config não altera assinatura dos usuários.
 - Mantidas as demais funções.
+
+
+## V20.10.0
+- Corrigido layout da tela Chamados quando rota antiga era acionada.
+- Corrigida rota Chamados por Analista/aliases.
+- Corrigida tela Ordens de Serviço com busca de todas as O.S. e chamados abertos.
+- Mantido layout de impressão da O.S.
+- Assinatura digital do analista prioriza dataUrl salva no Supabase, evitando sumir após reiniciar Render.
+- Adicionados aliases seguros para evitar erro OS83STATE is not defined.
