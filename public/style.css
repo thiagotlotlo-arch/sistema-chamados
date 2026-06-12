@@ -158,3 +158,11 @@ body,button,input,select,textarea,label,span,p,a,td,th,h1,h2,h3,h4,h5,h6{ text-t
   @page{size:A4;margin:7mm}
 }
 .assinatura-digital-os{max-width:150px;max-height:48px;object-fit:contain;display:block;margin:0 auto 2px auto}
+
+/* PATCH V20.9.4 CHAMADO ÚNICO/SUGESTÃO */
+.mini-inline{margin-left:6px;padding:4px 8px;border-radius:999px;font-size:12px}
+#sugestoes{margin-top:10px;line-height:2.4}
+#modalPrestadores{max-width:900px;width:min(92vw,900px);border:0;border-radius:16px;padding:20px}
+#modalPrestadores::backdrop{background:rgba(0,0,0,.45)}
+.pick-prestador{margin:4px;white-space:normal;text-align:left}
+.info.span-full{grid-column:1/-1}

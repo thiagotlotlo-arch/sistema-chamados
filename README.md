@@ -205,3 +205,12 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Corrige perda após reiniciar o Render.
 - Diagnóstico: /api/v2093/status.
 - Ação manual: POST /api/v2093/hidratar-imagens.
+
+
+## V20.9.4
+- Chamado rápido e chamado completo unificados em uma tela única de Novo Chamado.
+- Campos avançados ficam disponíveis apenas para usuários com permissão de tratativa/admin.
+- Botão pequeno "Sugerir" corrigido.
+- Sugestão automática de prestador por loja/cidade/UF/tipo de serviço.
+- Janela modal com prestadores disponíveis para a área.
+- Mantidas as demais funções e layouts existentes.

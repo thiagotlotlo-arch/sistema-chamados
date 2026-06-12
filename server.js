@@ -13,7 +13,7 @@ import WebSocket from "ws";
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);
 
-/* PATCH V20.9.3 - função de status fechado para evitar CLOSED IS NOT DEFINED */
+/* PATCH V20.9.4 - função de status fechado para evitar CLOSED IS NOT DEFINED */
 function closed(item){
   const s = String((item && (item.status || item.situacao || item.estado)) || item || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -22,7 +22,7 @@ function closed(item){
 }
 
 
-/* PATCH V20.9.3 - moeda BR correta: R$800,00 = 800.00 */
+/* PATCH V20.9.4 - moeda BR correta: R$800,00 = 800.00 */
 function v2088_moneyBR(v){
   if(v == null || v === '') return 0;
   if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -54,7 +54,7 @@ fs.mkdirSync(DATA_DIR,{recursive:true}); fs.mkdirSync(UPLOAD_DIR,{recursive:true
 const upload=multer({dest:UPLOAD_DIR,limits:{fileSize:30*1024*1024}});
 app.use(express.urlencoded({extended:true,limit:"50mb"}));
 
-/* PATCH V20.9.3 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
+/* PATCH V20.9.4 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
 function patchNomeLojaBody(req,res,next){
   try{
     if(req && req.body){
@@ -84,7 +84,7 @@ function now(){return new Date().toISOString()} function today(){return now().sl
 function dig(v){return String(v||'').replace(/\D/g,'')} function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function arr(v){return Array.isArray(v)?v:(v?[v]:[])} function money(v){return Number(String(v||0).replace(/[^\d,.-]/g,'').replace(',','.'))||0} function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} function br(v){const s=String(v||'').slice(0,10);const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s} function finalizado(s){return ['FINALIZADO','CANCELADO','FECHADO'].includes(norm(s))}
 
-/* PATCH V20.9.3 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
+/* PATCH V20.9.4 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
 function envTrim(name){ return String(process.env[name] || '').trim().replace(/^['\"]|['\"]$/g,''); }
 const SUPABASE_URL = envTrim('SUPABASE_URL') || envTrim('NEXT_PUBLIC_SUPABASE_URL');
 const SUPABASE_KEY = envTrim('SUPABASE_SERVICE_ROLE_KEY') || envTrim('SUPABASE_SERVICE_KEY') || envTrim('SUPABASE_KEY') || envTrim('SUPABASE_ANON_KEY');
@@ -126,7 +126,7 @@ async function initPersistentDB(){
   persistentCache = fallback;
   if(!supabasePersist){
     lastPersistError = 'SUPABASE NÃO CONFIGURADO. VERIFIQUE SUPABASE_URL E SUPABASE_SERVICE_ROLE_KEY NO RENDER.';
-    console.error('V20.9.3:', lastPersistError);
+    console.error('V20.9.4:', lastPersistError);
     return;
   }
   try{
@@ -136,23 +136,23 @@ async function initPersistentDB(){
       persistentCache = mergeDB(emptyDB(), data.data);
       fs.writeFileSync(DB_FILE, JSON.stringify(persistentCache,null,2),'utf8');
       supabaseOk = true; remoteLoaded = true; lastRemoteLoadAt = data.updated_at || new Date().toISOString(); lastPersistError='';
-      console.log('V20.9.3 carregado do Supabase app_state:', SUPABASE_STATE_ID);
+      console.log('V20.9.4 carregado do Supabase app_state:', SUPABASE_STATE_ID);
     }else{
       // Proteção: não apaga dados remotos nem força base vazia sem necessidade.
       if(dbHasRealData(fallback)){
         await saveRemoteNow(fallback);
-        console.log('V20.9.3 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
+        console.log('V20.9.4 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
       }else{
         const inicial = mergeDB(emptyDB(), {});
         persistentCache = inicial;
         await saveRemoteNow(inicial);
-        console.log('V20.9.3 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
+        console.log('V20.9.4 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
       }
       remoteLoaded = true;
     }
   }catch(e){
     supabaseOk = false; remoteLoaded = false; lastSaveOk = false; lastPersistError = e.message || String(e);
-    console.error('V20.9.3 ERRO SUPABASE:', lastPersistError);
+    console.error('V20.9.4 ERRO SUPABASE:', lastPersistError);
     console.error('IMPORTANTE: enquanto este erro existir, os dados ficam apenas temporários/local no Render. Rode o schema.sql e use SERVICE_ROLE_KEY.');
   }
 }
@@ -168,13 +168,13 @@ async function saveRemoteNow(d){
 function scheduleRemoteSave(d){
   persistentCache = mergeDB(emptyDB(), d);
   // Sempre grava JSON local também, mas fonte principal é Supabase.
-  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.3 erro JSON local:', e.message||e); }
+  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.4 erro JSON local:', e.message||e); }
   if(!supabasePersist){ lastSaveOk=false; lastPersistError='SUPABASE NÃO CONFIGURADO'; return; }
   if(savingRemote){ pendingRemote = true; return; }
   savingRemote = true;
   setTimeout(async()=>{
-    try{ await saveRemoteNow(persistentCache); console.log('V20.9.3 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
-    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.3 erro ao salvar Supabase:', lastPersistError); }
+    try{ await saveRemoteNow(persistentCache); console.log('V20.9.4 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
+    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.4 erro ao salvar Supabase:', lastPersistError); }
     finally{ savingRemote=false; if(pendingRemote){ pendingRemote=false; scheduleRemoteSave(persistentCache); } }
   }, 50);
 }
@@ -184,14 +184,14 @@ function save(d){ persistentCache=mergeDB(emptyDB(), hydratePersistentImages(d))
 function user(req){return req.session.user||null} function can(req,perm){const u=user(req); if(!u)return false; if(norm(u.usuario)==='OLITECH'||norm(u.perfil)==='ADMIN')return true; const d=load(); const uu=d.usuarios.find(x=>String(x.id)===String(u.id)||norm(x.usuario)===norm(u.usuario))||u; const pf=d.perfis.find(p=>norm(p.nome)===norm(uu.perfil)); const ps=[...arr(uu.permissoes),...arr(pf?.permissoes)].map(norm); return ps.includes('TODAS')||ps.includes(norm(perm))}
 function auth(req,res,nextfn){if(!user(req))return res.redirect('/login');nextfn()} function need(p){return (req,res,nextfn)=>can(req,p)?nextfn():res.status(403).send(page(req,'Sem permissão',`<div class="card"><h2>🚫 Sem permissão</h2><p>Permissão necessária: ${esc(p)}</p><a class="btn" href="/">🏠 Início</a></div>`))}
 
-/* PATCH V20.9.3 - LOGOS/ASSINATURAS PERSISTENTES NO SUPABASE */
+/* PATCH V20.9.4 - LOGOS/ASSINATURAS PERSISTENTES NO SUPABASE */
 function persistentFileObj(f){
   if(!f) return null;
   const o={original:f.originalname,path:'uploads/'+f.filename,filename:f.filename,mimetype:f.mimetype,size:f.size,at:now()};
   try{
     const mt=String(f.mimetype||'');
     if(mt.startsWith('image/')) o.dataUrl='data:'+mt+';base64,'+fs.readFileSync(f.path).toString('base64');
-  }catch(e){ console.error('V20.9.3 erro ao embutir imagem:', e.message||e); }
+  }catch(e){ console.error('V20.9.4 erro ao embutir imagem:', e.message||e); }
   return o;
 }
 function hydrateFileDataUrl(obj){
@@ -213,7 +213,7 @@ function hydratePersistentImages(d){ try{return hydrateFileDataUrl(d)}catch(e){r
 function fileObj(f){return persistentFileObj(f)} function oneFile(req,n){return fileObj(req.files?.[n]?.[0]||req.file)} function manyFiles(req,n){return (req.files?.[n]||[]).map(fileObj).filter(Boolean)} function publicFile(f){if(!f)return ''; if(typeof f==='string')return f; if(f.dataUrl)return f.dataUrl; return '/'+String(f.path||'').replace(/^\/+|\\/g,'/')} function appLogo(d){d=d||{};d.config=d.config||{};return publicFile(d.config.logoLocal)||d.config.logoUrl||d.config.logo||''}
 function menu(req){const items=[['/','🏠 Início','INICIO'],['/chamados','🎫 Chamados','CHAMADOS'],['/chamados-por-analista','👤 Chamados por Analista','CHAMADOS'],['/lojas','🏬 Lojas','LOJAS'],['/prestadores','🧰 Prestadores','PRESTADORES'],['/proprietarios','👥 Proprietários','PROPRIETARIOS'],['/lembretes','📌 Lembretes','LEMBRETES'],['/preventivas','🗓️ Preventivas','PREVENTIVAS'],['/os','📄 Ordens de Serviço','ORDENS_SERVICO'],['/importar-planilha','📥 Importar','IMPORTAR'],['/relatorios','📊 Relatórios','RELATORIOS'],['/ponto-horas','⏱️ Ponto/Horas','PONTO_HORAS'],['/config','⚙️ Config','CONFIG'],['/logout','🚪 Sair','INICIO']];return `<nav>${items.filter(i=>i[0]==='/logout'||can(req,i[2])).map(i=>`<a class="btn menu-btn" href="${i[0]}">${i[1]}</a>`).join('')}</nav>`}
 
-/* PATCH V20.9.3 - assinatura digital do analista na O.S. */
+/* PATCH V20.9.4 - assinatura digital do analista na O.S. */
 function v2088_publicImg(f){
   try{
     if(!f) return '';
@@ -255,46 +255,44 @@ function v2088_injetarAssinaturaOS(html,d,analista){
   }catch(e){ return html; }
 }
 
-function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.3</div><script src="/public/app.js"></script></body></html>`}
+function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.4</div><script src="/public/app.js"></script></body></html>`}
 function errorPage(req,e){console.error(e);return page(req,'Erro tratado',`<div class="card"><h2>⚠️ Erro tratado</h2><p>O sistema encontrou um erro nesta operação, mas não travou.</p><p><b>Detalhe:</b> ${esc(e?.message||String(e))}</p><a class="btn" href="/">🏠 Início</a> <a class="btn secondary" href="javascript:history.back()">↩️ Voltar</a></div>`)}
 function tabela(headers,rows,empty='Nenhum registro encontrado'){return `<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}">${esc(empty)}</td></tr>`}</tbody></table>`}
 function busca(action,ph){return `<form class="card search" method="get" action="${action}"><input name="q" placeholder="${esc(ph)}"><button>🔎 Buscar</button><a class="btn" href="${action}?mostrar=1">Mostrar todos</a><a class="btn secondary" href="${action}">Limpar</a></form>`}
 function findLoja(d,q){return d.lojas.find(l=>String(l.id)===String(q)||norm(l.nome)===norm(q)||norm(l.codigo)===norm(q))||{}} function findPrestador(d,q){return d.prestadores.find(p=>String(p.id)===String(q)||norm(p.empresa)===norm(q)||norm(p.responsavel)===norm(q))||{}}
 function distKm(a,b,c,d){a=Number(a);b=Number(b);c=Number(c);d=Number(d);if(!a||!b||!c||!d)return null;const R=6371,da=(c-a)*Math.PI/180,db=(d-b)*Math.PI/180,x=Math.sin(da/2)**2+Math.cos(a*Math.PI/180)*Math.cos(c*Math.PI/180)*Math.sin(db/2)**2;return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x))}
-function sugerePrestadores(d,lojaQ,tipoQ){const loja=findLoja(d,lojaQ);const tipo=norm(tipoQ);return d.prestadores.filter(p=>{if(norm(p.ativo||'SIM')==='NÃO')return false;const serv=[...arr(p.servicos),...arr(p.tiposServico)].map(norm);const okServ=!tipo||tipo==='A DEFINIR'||serv.includes(tipo)||serv.includes('FAZ TUDO');const mesmaCidade=norm(p.cidade)===norm(loja.cidade)&&norm(p.uf||p.estado)===norm(loja.uf||loja.estado);const mesmaUf=norm(p.uf||p.estado)===norm(loja.uf||loja.estado);const dist=distKm(loja.latitude,loja.longitude,p.latitude,p.longitude);const raio=Number(p.raioKm||p.raio||0);const okDist=dist===null?(mesmaCidade||mesmaUf):(!raio||dist<=raio);return okServ&&okDist}).map(p=>{const distancia=distKm(loja.latitude,loja.longitude,p.latitude,p.longitude);const desloc=distancia?distancia*money(p.valorKm):0;return {...p,distancia,valorDeslocamento:desloc}})}
-function limpaEmpresa(n){return norm(n).replace(/\b(NOME|EMPRESARIAL|RAZAO|RAZÃO|SOCIAL|TITULO|TÍTULO|DO|DA|DE|ESTABELECIMENTO|FANTASIA|LTDA|L T D A|EIRELI|EPP|ME|MATRIZ|FILIAL|S\/A|SA|CNPJ|CEP|UF|TELEFONE|ENDERECO|ENDEREÇO|ELETRONICO|ELETRÔNICO|MUNICIPIO|MUNICÍPIO|INSCRICAO|INSCRIÇÃO|ESTADUAL|COMPROVANTE|CADASTRO)\b/g,' ').replace(/[^A-Z0-9À-Ú ]/g,' ').replace(/\s+/g,' ').trim()}
-function ufOnly(v){return (norm(v).match(/\b(AC|AL|AP|AM|BA|CE|DF|ES|GO|MA|MT|MS|MG|PA|PB|PR|PE|PI|RJ|RN|RS|RO|RR|SC|SP|SE|TO)\b/)||[])[1]||''}
-function mesclaFilial(nome,cidade,uf){const base=limpaEmpresa(nome);const cid=norm(cidade).replace(/\b(MUNICIPIO|MUNICÍPIO|CIDADE|UF|CEP|ENDERECO|ENDEREÇO|ELETRONICO|ELETRÔNICO)\b/g,' ').replace(/[^A-ZÀ-Ú ]/g,' ').replace(/\s+/g,' ').trim();const estado=ufOnly(uf)||norm(uf).slice(0,2);return `${base} ${cid} ${estado}`.replace(/\s+/g,' ').trim()}
-async function parsePdf(file){
-  const data=await pdfParse(fs.readFileSync(file));
-  const raw=(data.text||'').replace(/\r/g,'\n');
-  const lines=raw.split(/\n+/).map(x=>norm(x).replace(/\s+/g,' ').trim()).filter(Boolean);
-  const text=lines.join(' ');
-  const cnpj=(text.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/)||[])[0]||'';
-  const cep=(text.match(/\d{5}-?\d{3}/)||[])[0]||'';
-  const uf=ufOnly(text);
-  const tel=(text.match(/(?:\(?\d{2}\)?\s*)?\d{4,5}-?\d{4}/)||[])[0]||'';
-  function lineAfter(labels){
-    for(const label of labels){const i=lines.findIndex(l=>l.includes(label));if(i>=0){const same=lines[i].split(label).pop().replace(/^[:\-\s]+/,'').trim();if(same&&same.length>2&&!/(COMPROVANTE|CADASTRO|DATA|ENDERECO ELETRONICO|ENDEREÇO ELETRÔNICO|EMAIL|E-MAIL|INSCRICAO|INSCRIÇÃO)/.test(same))return same;for(let k=i+1;k<Math.min(i+6,lines.length);k++){const v=lines[k];if(v&&!/^(DATA|NUMERO|NÚMERO|COMPROVANTE|CADASTRO|CNPJ|CEP|UF|PORTE|CODIGO|CÓDIGO|ENDERECO ELETRONICO|ENDEREÇO ELETRÔNICO|EMAIL|E-MAIL|INSCRICAO|INSCRIÇÃO|ATIVIDADE|SITUACAO|SITUAÇÃO|ENTE|FEDERATIVO)/.test(v))return v}}}
-    return '';
-  }
-  let fantasia=lineAfter(['TITULO DO ESTABELECIMENTO','TÍTULO DO ESTABELECIMENTO','NOME DE FANTASIA']);
-  let razao=lineAfter(['NOME EMPRESARIAL','RAZAO SOCIAL','RAZÃO SOCIAL']);
-  let nome=fantasia||razao;
-  if(!nome)nome=lines.find(l=>/\b(MEGA VEST CASA|VEST CASA|LTDA|EIRELI|EPP)\b/.test(l)&&!/ENDERECO|ENDEREÇO|ELETRONICO|ELETRÔNICO|COMPROVANTE/.test(l))||'';
-  let cidade=lineAfter(['MUNICIPIO','MUNICÍPIO','CIDADE']);
-  let endereco=lineAfter(['LOGRADOURO','ENDERECO','ENDEREÇO']);
-  let bairro=lineAfter(['BAIRRO']);
-  if(bairro&&endereco&&!endereco.includes(bairro))endereco=(endereco+' '+bairro).trim();
-  cidade=norm(cidade).replace(/\b(UF|CEP|ENDERECO|ENDEREÇO|ELETRONICO|ELETRÔNICO)\b/g,' ').replace(/[^A-ZÀ-Ú ]/g,' ').replace(/\s+/g,' ').trim();
-  endereco=norm(endereco).replace(/\b(CEP|UF|MUNICIPIO|MUNICÍPIO|ENDERECO ELETRONICO|ENDEREÇO ELETRÔNICO|EMAIL|E-MAIL)\b/g,' ').replace(/\s+/g,' ').trim();
-  return {nome:limpaEmpresa(nome),razao:limpaEmpresa(razao),fantasia:limpaEmpresa(fantasia),cnpj:dig(cnpj),cep:dig(cep),uf,telefone:dig(tel),cidade,endereco};
+function sugerePrestadores(d,lojaQ,tipoQ){
+ const loja=findLoja(d,lojaQ);
+ const tipo=norm(tipoQ);
+ const lc=norm(loja.cidade||''), uf=norm(loja.uf||loja.estado||'');
+ return d.prestadores.filter(p=>{
+   if(norm(p.ativo||'SIM')==='NÃO')return false;
+   const serv=[...arr(p.servicos),...arr(p.tiposServico),p.tipoServico,p.tipo].map(norm).filter(Boolean);
+   const okServ=!tipo||tipo==='A DEFINIR'||serv.includes(tipo)||serv.includes('FAZ TUDO')||serv.includes('A DEFINIR');
+   const mesmaCidade=lc && norm(p.cidade)===lc;
+   const mesmaUf=uf && norm(p.uf||p.estado)===uf;
+   const dist=distKm(loja.latitude,loja.longitude,p.latitude,p.longitude);
+   const raio=Number(p.raioKm||p.raio||p.kmAtendido||p.km||0);
+   const okDist=dist===null?(mesmaCidade||mesmaUf||!lc):(!raio||dist<=raio);
+   return okServ&&okDist;
+ }).map(p=>{
+   const distancia=distKm(loja.latitude,loja.longitude,p.latitude,p.longitude);
+   const serv=[...arr(p.servicos),...arr(p.tiposServico),p.tipoServico,p.tipo].map(norm);
+   let score=0;
+   if(lc && norm(p.cidade)===lc)score+=100;
+   if(uf && norm(p.uf||p.estado)===uf)score+=50;
+   if(tipo && serv.includes(tipo))score+=80;
+   if(serv.includes('FAZ TUDO'))score+=20;
+   if(distancia!==null)score+=Math.max(0,50-distancia);
+   const desloc=distancia?distancia*money(p.valorKm):0;
+   return {...p,distancia,valorDeslocamento:desloc,score};
+ }).sort((a,b)=>(b.score||0)-(a.score||0));
 }
 function syncPreventiva(d,p){let l=d.lembretes.find(x=>String(x.preventivaId)===String(p.id)||String(x.id)===String(p.lembreteId||''));if(!l){l={id:next(d,'lembrete')};d.lembretes.push(l);p.lembreteId=l.id}Object.assign(l,{titulo:`PREVENTIVA - ${p.titulo}`,data:p.dataLembrete||today(),hora:p.horaLembrete||'09:00',som:p.som||'BIPE',analista:p.analista||'',mostrarTodos:p.mostrarTodos||'SIM',cor:p.cor||'AMARELO',fixarInicial:'SIM',preventivaId:p.id,descricao:p.descricao||`Preventiva da loja ${p.lojaNome||''}`})}
 
 app.get('/login',(req,res)=>res.send(`<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login</title><link rel="stylesheet" href="/public/style.css"></head><body class="login-body"><form class="login-card" method="post"><div class="login-logo">VB</div><h1>V&B CHAMADOS</h1><label>Usuário<input name="usuario" autocomplete="username" autofocus></label><label>Senha<input type="password" name="senha" autocomplete="current-password"></label><label class="inline"><input type="checkbox" name="lembrar" value="SIM"> Salvar usuário</label><button>Entrar</button></form><script src="/public/app.js"></script></body></html>`));
 app.post('/login',(req,res)=>{const d=load();const u=d.usuarios.find(x=>norm(x.ativo||'SIM')!=='NÃO'&&norm(x.usuario)===norm(req.body.usuario)&&String(x.senha||'')===String(req.body.senha||''));if(!u)return res.send(page(req,'Login',`<div class="login-card"><p class="alert">Usuário ou senha inválidos.</p><a class="btn" href="/login">Tentar novamente</a></div>`));req.session.user={id:u.id,nome:u.nome,usuario:u.usuario,perfil:u.perfil,permissoes:u.permissoes||[]};res.redirect('/')}); app.get('/logout',(req,res)=>req.session.destroy(()=>res.redirect('/login')));
-/* PATCH V20.9.3 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
+/* PATCH V20.9.4 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
 app.get('/',auth,(req,res)=>{
   const d=load();
   const q=norm(req.query.q||'');
@@ -304,12 +302,12 @@ app.get('/',auth,(req,res)=>{
   if(q) chamados=chamados.filter(c=>norm(`${c.numeroInterno||c.id} ${c.lojaNome||''} ${c.analista||''} ${c.tipoServico||''} ${c.status||''}`).includes(q));
   if(!mostrar) chamados=[];
   const rows=mostrar ? (chamados.slice(0,80).map(c=>`<tr><td>${esc(c.numeroInterno||c.id)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista||'SEM ANALISTA')}</td><td>${esc(c.tipoServico||'')}</td><td>${esc(c.prioridade||'')}</td><td>${esc(c.status||'ABERTO')}</td><td><a class="btn small" href="/chamados/${c.id}/editar">Abrir</a></td></tr>`).join('')||'<tr><td colspan=7>NENHUM CHAMADO ENCONTRADO.</td></tr>') : '<tr><td colspan=7>DIGITE NO CAMPO DE BUSCA OU CLIQUE EM MOSTRAR TODOS PARA CARREGAR A GRID.</td></tr>';
-  res.send(page(req,'Início',`${lemb?`<div class="postits">${lemb}</div>`:''}<div class="card quick-card"><h2>Ações rápidas</h2><div class="quick-actions"><a class="btn" href="/chamados/rapido">➕ Criar chamado rápido</a><a class="btn secondary" href="/chamados/novo">Abrir chamado completo</a><a class="btn secondary" href="/os/nova">Juntar chamados / Gerar OS</a></div></div><div class="card initial-grid"><h2>Minha grid inicial</h2><form method="get" class="searchline home-search"><input name="q" value="${esc(req.query.q||'')}" placeholder="BUSCAR Nº, LOJA, ANALISTA, SERVIÇO..."><button>Buscar</button><a class="btn secondary" href="/?mostrar=1">Mostrar todos</a></form><div class="table-wrap"><table><thead><tr><th>Chamado</th><th>Loja</th><th>Analista</th><th>Serviço</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div></div>`))
+  res.send(page(req,'Início',`${lemb?`<div class="postits">${lemb}</div>`:''}<div class="card quick-card"><h2>Ações rápidas</h2><div class="quick-actions"><a class="btn" href="/chamados/novo">➕ Novo chamado</a><a class="btn secondary" href="/os/nova">Juntar chamados / Gerar OS</a></div></div><div class="card initial-grid"><h2>Minha grid inicial</h2><form method="get" class="searchline home-search"><input name="q" value="${esc(req.query.q||'')}" placeholder="BUSCAR Nº, LOJA, ANALISTA, SERVIÇO..."><button>Buscar</button><a class="btn secondary" href="/?mostrar=1">Mostrar todos</a></form><div class="table-wrap"><table><thead><tr><th>Chamado</th><th>Loja</th><th>Analista</th><th>Serviço</th><th>Prioridade</th><th>Status</th><th>Ações</th></tr></thead><tbody>${rows}</tbody></table></div></div>`))
 });
 function postit(l){const cor=norm(l.cor||'AMARELO').toLowerCase();const href=l.chamadoId?`/chamados/${l.chamadoId}/editar`:(l.preventivaId?`/preventivas/${l.preventivaId}/editar`:`/lembretes/${l.id}/editar`);return `<a class="postit ${cor}" href="${href}"><b>${esc(l.titulo)}</b><span>📅 ${br(l.data)} ${esc(l.hora||'')}</span><small>${esc(l.descricao||'')}</small></a>`}
 
 app.get('/api/autocomplete',auth,(req,res)=>{const d=load(),tipo=norm(req.query.tipo||'GERAL'),q=norm(req.query.q||''),di=dig(req.query.q||'');if(q.length<2&&di.length<2)return res.json({ok:true,items:[]});const items=[];const add=(tipo,id,label,value,sub,raw)=>items.push({tipo,id,label,value,sub,raw});if(['LOJAS','GERAL'].includes(tipo))d.lojas.forEach(l=>add('loja',l.id,l.nome,l.nome,[l.codigo,l.cidade,l.uf,l.cnpj,l.cep].filter(Boolean).join(' | '),l));if(['PRESTADORES','GERAL'].includes(tipo))d.prestadores.forEach(p=>add('prestador',p.id,p.empresa||p.responsavel,p.empresa||p.responsavel,[p.responsavel,p.cidade,p.uf,p.cnpj,(p.servicos||[]).join(',')].filter(Boolean).join(' | '),p));if(['PROPRIETARIOS','GERAL'].includes(tipo))d.proprietarios.forEach(p=>add('proprietario',p.id,p.nome,p.nome,[p.cidade,p.uf,p.cnpj,p.cpf].filter(Boolean).join(' | '),p));if(['ANALISTAS','USUARIOS','GERAL'].includes(tipo))d.usuarios.filter(u=>norm(u.ativo)!=='NÃO').forEach(u=>add('usuario',u.id,u.nome||u.usuario,u.nome||u.usuario,[u.usuario,u.perfil].filter(Boolean).join(' | '),u));if(['CHAMADOS','GERAL'].includes(tipo))d.chamados.forEach(c=>add('chamado',c.id,`${c.numeroInterno||c.id} - ${c.lojaNome||''}`,String(c.numeroInterno||c.id),[c.prestadorNome,c.status,c.tipoServico].filter(Boolean).join(' | '),c));if(['SERVICOS','GERAL'].includes(tipo))d.tiposServico.forEach(s=>add('servico',s,s,s,'Tipo de serviço',{nome:s}));const ok=items.filter(x=>norm([x.label,x.sub,JSON.stringify(x.raw)].join(' ')).includes(q)||di&&dig([x.label,x.sub].join(' ')).includes(di)).slice(0,40);res.json({ok:true,items:ok})});
-app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.3'}));
+app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.4'}));
 
 app.get('/config',auth,need('CONFIG'),(req,res)=>{const d=load(),c=d.config;res.send(page(req,'Config',`<section class="card"><h2>⚙️ Configurações</h2><form method="post" enctype="multipart/form-data" class="form"><div class="grid4"><label>Nome sistema<input name="nomeSistema" value="${esc(c.nomeSistema)}"></label><label>Subtítulo<input name="subtitulo" value="${esc(c.subtitulo)}"></label><label>Tema<select name="tema">${['VERDE','AZUL','ESCURO','ROXO','LARANJA'].map(t=>`<option ${norm(c.tema)===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Logo URL<input name="logoUrl" value="${esc(c.logoUrl)}"></label><label>Logo local<input type="file" name="logoLocal" accept="image/*"></label>${appLogo(d)?`<label>Logo atual<div class="logo-preview"><img src="${esc(appLogo(d))}" onerror="this.style.display='none'"></div></label>`:''}<label>Logo da O.S.<select name="usarLogoLojaOS"><option value="SIM" ${c.usarLogoLojaOS!=='NAO'?'selected':''}>REUTILIZAR LOGO DA LOJA</option><option value="NAO" ${c.usarLogoLojaOS==='NAO'?'selected':''}>USAR LOGO DA EMPRESA</option></select></label><label>Filial / nomes repetidos<select name="regraNomeFilial"><option value="ORIGINAL" ${c.regraNomeFilial==='ORIGINAL'?'selected':''}>ORIGINAL</option><option value="MESCLAR_NOME_CIDADE_UF" ${c.regraNomeFilial!=='ORIGINAL'?'selected':''}>MESCLAR NOME + CIDADE + UF</option></select></label></div><button>💾 Salvar</button></form></section><section class="card"><h2>Cadastros de apoio</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a><a class="btn" href="/perfis">🔐 Perfis/Permissões</a><a class="btn" href="/backup">💾 Backup/Restauração</a><a class="btn" href="/tipos-servico">🛠️ Tipos de serviço</a><a class="btn" href="/diagnostico">🩺 Diagnóstico</a></section>`))});
 app.post('/config',auth,need('CONFIG'),upload.single('logoLocal'),(req,res)=>{const d=load();Object.assign(d.config,{nomeSistema:norm(req.body.nomeSistema||d.config.nomeSistema),subtitulo:norm(req.body.subtitulo||d.config.subtitulo),tema:norm(req.body.tema||d.config.tema),logoUrl:(req.body.logoUrl||'').trim(),regraNomeFilial:req.body.regraNomeFilial||'ORIGINAL',usarLogoLojaOS:req.body.usarLogoLojaOS||d.config.usarLogoLojaOS||'SIM'});if(req.file)d.config.logoLocal=fileObj(req.file);save(d);res.redirect('/config')});
@@ -331,29 +329,18 @@ app.get('/tipos-servico',auth,need('CONFIG'),(req,res)=>{const d=load();res.send
 function proprietarioForm(req,p={}){return page(req,p.id?'Editar proprietário':'Novo proprietário',`<div class="bar"><h2>👥 ${p.id?'Editar':'Novo'} proprietário</h2><a class="btn secondary" href="/proprietarios">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data"><div class="grid4"><label>Nome<input name="nome" value="${esc(p.nome)}" required></label><label>CNPJ<input name="cnpj" value="${esc(p.cnpj)}" data-mask="cnpj"></label><label>CPF<input name="cpf" value="${esc(p.cpf)}" data-mask="cpf"></label><label>Telefone<input name="telefone" value="${esc(p.telefone)}" data-mask="telefone"></label><label>CEP<input name="cep" value="${esc(p.cep)}" data-mask="cep"></label><label>UF<input name="uf" value="${esc(p.uf)}"></label><label>Cidade<input name="cidade" value="${esc(p.cidade)}"></label><label>Endereço<input name="endereco" value="${esc(p.endereco)}"></label><label>Cartão CNPJ<input type="file" name="cartaoCnpj"></label><label>Fotos<input type="file" name="fotos" multiple></label></div><button>💾 Salvar</button></form>`)}
 app.get('/proprietarios',auth,need('PROPRIETARIOS'),(req,res)=>{const d=load(),q=norm(req.query.q||''),show=req.query.mostrar||q;const lista=show?d.proprietarios.filter(p=>!q||norm([p.nome,p.cnpj,p.cpf,p.cidade,p.telefone].join(' ')).includes(q)):[];res.send(page(req,'Proprietários',`<div class="bar"><h2>👥 Proprietários</h2><a class="btn" href="/proprietarios/novo">➕ Novo</a></div>${busca('/proprietarios','Buscar proprietário...')}<div class="card">${tabela(['Nome','Cidade/UF','Documento','Telefone','Ações'],lista.map(p=>`<tr><td>${esc(p.nome)}</td><td>${esc(p.cidade)}/${esc(p.uf)}</td><td>${esc(p.cnpj||p.cpf)}</td><td>${esc(p.telefone)}</td><td><a class="btn small" href="/proprietarios/${p.id}/editar">✏️ Editar</a><form class="inline-form" method="post" action="/proprietarios/${p.id}/excluir"><button class="small danger">🗑️ Excluir</button></form></td></tr>`),'Use a busca ou Mostrar todos.')}</div>`))});app.get('/proprietarios/novo',auth,need('PROPRIETARIOS'),(req,res)=>res.send(proprietarioForm(req)));app.get('/proprietarios/:id/editar',auth,need('PROPRIETARIOS'),(req,res)=>res.send(proprietarioForm(req,load().proprietarios.find(p=>String(p.id)===String(req.params.id))||{})));app.post(['/proprietarios/novo','/proprietarios/:id/editar'],auth,need('PROPRIETARIOS'),upload.fields([{name:'cartaoCnpj',maxCount:1},{name:'fotos',maxCount:20}]),(req,res)=>{const d=load();let p=req.params.id?d.proprietarios.find(x=>String(x.id)===String(req.params.id)):null;if(!p){p={id:next(d,'proprietario')};d.proprietarios.push(p)}Object.assign(p,{nome:norm(req.body.nome),cnpj:dig(req.body.cnpj),cpf:dig(req.body.cpf),telefone:dig(req.body.telefone),whatsappResponsavel:dig(req.body.whatsappResponsavel),cep:dig(req.body.cep),uf:norm(req.body.uf),cidade:norm(req.body.cidade),endereco:norm(req.body.endereco)});if(req.files?.cartaoCnpj?.[0])p.cartaoCnpj=fileObj(req.files.cartaoCnpj[0]);p.fotos=[...arr(p.fotos),...manyFiles(req,'fotos')];save(d);res.redirect('/proprietarios')});app.post('/proprietarios/:id/excluir',auth,need('PROPRIETARIOS'),(req,res)=>{const d=load();d.proprietarios=d.proprietarios.filter(x=>String(x.id)!==String(req.params.id));save(d);res.redirect('/proprietarios')});
 
-function chamadoForm(req,c={}){const d=load(),edit=!!c.id;return page(req,edit?'Editar chamado':'Novo chamado',`<div class="bar"><h2>🎫 ${edit?'Editar':'Novo'} chamado</h2><a class="btn secondary" href="/chamados">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data"><div class="grid4"><label>Tipo número<select name="tipoNumero"><option>AUTOMÁTICO</option><option ${norm(c.tipoNumero)==='TERCEIRO'?'selected':''}>TERCEIRO</option></select></label><label>Nº chamado terceiro<input name="numeroExterno" value="${esc(c.numeroExterno)}"></label><label>Loja<input name="lojaNome" value="${esc(c.lojaNome)}" data-auto="lojas" required></label><label>Analista<input name="analista" value="${esc(c.analista)}" data-auto="analistas"></label><label>Tipo serviço<select name="tipoServico" id="tipoServico">${d.tiposServico.map(s=>`<option ${norm(c.tipoServico||'A DEFINIR')===norm(s)?'selected':''}>${esc(s)}</option>`).join('')}</select></label><label>Prestador <button type="button" class="mini-inline" id="btnSugestaoInline">🎯 Sugerir</button><input name="prestadorNome" id="prestadorNome" value="${esc(c.prestadorNome)}" data-auto="prestadores"></label><label>Prioridade<select name="prioridade">${['MÍNIMA','MÉDIA','MÁXIMA'].map(s=>`<option ${norm(c.prioridade||'MÉDIA')===s?'selected':''}>${s}</option>`).join('')}</select></label><label>Status<select name="status">${d.statusChamado.map(s=>`<option ${norm(c.status||'ABERTO')===norm(s)?'selected':''}>${esc(s)}</option>`).join('')}</select></label><label>Valor serviço<input name="valor" value="${esc(c.valor||0)}"></label><label>Data orçamento<input type="date" name="dataOrcamento" value="${esc(c.dataOrcamento)}"></label><label>Data agendada<input type="date" name="dataAgendada" value="${esc(c.dataAgendada)}"></label><label>Por conta proprietário?<select name="servicoProprietario"><option ${norm(c.servicoProprietario||'NÃO')==='NÃO'?'selected':''}>NÃO</option><option ${norm(c.servicoProprietario)==='SIM'?'selected':''}>SIM</option></select></label></div><label>Descrição serviços<textarea name="descricao" required>${esc(c.descricao)}</textarea></label><label>Observações<textarea name="observacoes">${esc(c.observacoes)}</textarea></label><label>Anexos/imagens<input type="file" name="anexos" multiple></label><div class="actions"><button type="button" id="btnSugestao">🎯 Sugerir prestador</button><a class="btn secondary" href="/tipos-servico">🛠️ Tipos de serviço</a><button>💾 Salvar</button>${edit?`<a class="btn" href="/os/nova?q=${encodeURIComponent(c.numeroInterno||c.id)}">📄 Gerar O.S.</a>`:''}</div><div id="sugestoes" class="hint"></div></form>`)}
-app.get('/chamados',auth,need('CHAMADOS'),(req,res)=>{const d=load(),q=norm(req.query.q||''),analista=norm(req.query.analista||''),show=req.query.mostrar||q||analista;let lista=show?d.chamados.filter(c=>!finalizado(c.status)):[];if(q)lista=lista.filter(c=>norm([c.numeroInterno,c.numeroExterno,c.lojaNome,c.prestadorNome,c.analista,c.status,c.tipoServico,c.descricao].join(' ')).includes(q));if(analista)lista=lista.filter(c=>norm(c.analista).includes(analista));res.send(page(req,'Chamados',`<div class="bar"><h2>🎫 Chamados</h2><a class="btn" href="/chamados/rapido">➕ Chamado rápido</a><a class="btn secondary" href="/chamados/novo-completo">🎫 Chamado completo</a></div><form class="card search" method="get"><input name="q" placeholder="Buscar chamado, loja, prestador..."><input name="analista" placeholder="Analista" data-auto="analistas"><button>🔎 Buscar</button><a class="btn" href="/chamados?mostrar=1">Mostrar todos</a></form><div class="card">${tabela(['Nº','Loja','Analista','Prestador','Serviço','Prioridade','Status','Data','Ações'],lista.map(c=>`<tr><td>${esc(c.numeroInterno||c.id)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista)}</td><td>${esc(c.prestadorNome)}</td><td>${esc(c.tipoServico)}</td><td>${esc(c.prioridade)}</td><td>${esc(c.status)}</td><td>${br(c.dataAbertura)}</td><td><a class="btn small" href="/chamados/${c.id}/editar">🛠️ Tratar</a><form class="inline-form" method="post" action="/chamados/${c.id}/migrar"><input name="analista" placeholder="Novo analista" data-auto="analistas"><button class="small">👤 Migrar</button></form></td></tr>`),'Use a busca ou Mostrar todos.')}</div>`))});app.get('/chamados-por-analista',auth,need('CHAMADOS'),(req,res)=>{req.query.analista=req.query.analista||user(req).nome; req.query.mostrar='1'; const d=load(),a=norm(req.query.analista),lista=d.chamados.filter(c=>!finalizado(c.status)&&(!a||norm(c.analista).includes(a)));res.send(page(req,'Chamados por Analista',`<div class="bar"><h2>👤 Chamados por Analista</h2><a class="btn" href="/chamados">Todos</a></div><form class="card search" method="get"><input name="analista" value="${esc(req.query.analista)}" data-auto="analistas"><button>Buscar</button></form><div class="card">${tabela(['Nº','Loja','Analista','Prestador','Serviço','Status','Ações'],lista.map(c=>`<tr><td>${esc(c.numeroInterno)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista)}</td><td>${esc(c.prestadorNome)}</td><td>${esc(c.tipoServico)}</td><td>${esc(c.status)}</td><td><a class="btn small" href="/chamados/${c.id}/editar">Tratar</a></td></tr>`))}</div>`))});app.get(['/chamados/novo-completo','/chamados/novo','/chamados/rapido'],auth,need('CHAMADOS'),(req,res)=>res.send(chamadoForm(req)));app.get('/chamados/:id/editar',auth,need('CHAMADOS'),(req,res)=>res.send(chamadoForm(req,load().chamados.find(c=>String(c.id)===String(req.params.id))||{})));app.post(['/chamados/novo-completo','/chamados/novo','/chamados/rapido','/chamados/:id/editar'],auth,need('CHAMADOS'),upload.fields([{name:'anexos',maxCount:30}]),(req,res)=>{const d=load();let c=req.params.id?d.chamados.find(x=>String(x.id)===String(req.params.id)):null;if(!c){c={id:next(d,'chamado'),numeroInterno:next(d,'numeroChamado'),criadoEm:now(),abertoPor:user(req).nome};d.chamados.push(c)}const loja=findLoja(d,req.body.lojaNome),prest=findPrestador(d,req.body.prestadorNome);Object.assign(c,{tipoNumero:req.body.tipoNumero||'AUTOMÁTICO',numeroExterno:dig(req.body.numeroExterno),lojaId:loja.id||'',lojaNome:norm(req.body.lojaNome||loja.nome),analista:norm(req.body.analista),prestadorId:prest.id||'',prestadorNome:norm(req.body.prestadorNome||prest.empresa||prest.responsavel),tipoServico:norm(req.body.tipoServico||'A DEFINIR'),prioridade:norm(req.body.prioridade||'MÉDIA'),status:norm(req.body.status||'ABERTO'),valor:money(req.body.valor),dataOrcamento:req.body.dataOrcamento||'',dataAgendada:req.body.dataAgendada||'',dataAbertura:c.dataAbertura||today(),descricao:norm(req.body.descricao),observacoes:norm(req.body.observacoes),servicoProprietario:norm(req.body.servicoProprietario||'NÃO'),atualizadoEm:now()});c.anexos=[...arr(c.anexos),...manyFiles(req,'anexos')];save(d);res.redirect(`/chamados/${c.id}/editar`)});app.post('/chamados/:id/migrar',auth,need('CHAMADOS'),(req,res)=>{const d=load(),c=d.chamados.find(x=>String(x.id)===String(req.params.id));if(c){c.historico=arr(c.historico);c.historico.push({tipo:'MIGRAR_ANALISTA',de:c.analista,para:norm(req.body.analista),por:user(req).nome,data:now()});c.analista=norm(req.body.analista);save(d)}res.redirect('/chamados?mostrar=1')});
-
-
-/* V16.1 - impressão de O.S. no padrão enviado pelo usuário */
-function osLogoEscolhido(d,loja){if((d.config.usarLogoLojaOS||'SIM')!=='NAO')return publicFile(loja.logoLocal)||loja.logoUrl||appLogo(d);return appLogo(d)||publicFile(loja.logoLocal)||loja.logoUrl}
-
-/* ================= PATCH V20.9.3 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
-function os83State(){ return load(); }
-function os83Closed(c){ return finalizado(c.status) || finalizado(c.statusOs); }
-function os83Num(c){ return c.numeroInterno || c.numeroExterno || c.numero || c.id || ''; }
-function os83GroupKey(c){ return `${norm(c.lojaNome||c.loja||'SEM LOJA')}|||${norm(c.prestadorNome||c.prestador||'SEM PRESTADOR')}`; }
-function os83Loja(d,c,os={}){ return d.lojas.find(l=>String(l.id)===String(c.lojaId||os.lojaId||'')) || findLoja(d,c.lojaNome||os.lojaNome||c.loja||'') || {}; }
-function os83Prestador(d,c,os={}){ return d.prestadores.find(p=>String(p.id)===String(c.prestadorId||os.prestadorId||'')) || findPrestador(d,c.prestadorNome||os.prestadorNome||c.prestador||'') || {}; }
-function os83UserByAnalista(d,req,nome){
-  const sess=user(req)||{};
-  return d.usuarios.find(u=>String(u.id)===String(sess.id||'')) ||
-         d.usuarios.find(u=>norm(u.usuario)===norm(sess.usuario||'')) ||
-         d.usuarios.find(u=>norm(u.nome)===norm(nome||'')) ||
-         d.usuarios.find(u=>norm(u.usuario)===norm(nome||'')) || sess || {};
+function chamadoForm(req,c={}){
+const d=load(),edit=!!c.id, avancado=can(req,'CHAMADOS_EDITAR')||can(req,'CONFIG')||norm(user(req)?.perfil)==='ADMIN';
+const readonly=avancado?'':'readonly';
+const disabled=avancado?'':'disabled';
+const hiddenAdvanced=avancado?'':'<input type="hidden" name="tipoNumero" value="AUTOMÁTICO"><input type="hidden" name="prioridade" value="MÍNIMA"><input type="hidden" name="status" value="ABERTO"><input type="hidden" name="tipoServico" value="A DEFINIR"><input type="hidden" name="valor" value="0"><input type="hidden" name="servicoProprietario" value="NÃO">';
+const servicos=(d.tiposServico||['A DEFINIR']).map(s=>`<option ${norm(c.tipoServico||'A DEFINIR')===norm(s)?'selected':''}>${esc(s)}</option>`).join('');
+const status=(d.statusChamado||['ABERTO']).map(s=>`<option ${norm(c.status||'ABERTO')===norm(s)?'selected':''}>${esc(s)}</option>`).join('');
+const avancadoHtml=avancado?`<label>Tipo número<select name="tipoNumero"><option>AUTOMÁTICO</option><option ${norm(c.tipoNumero)==='TERCEIRO'?'selected':''}>TERCEIRO</option></select></label><label>Nº chamado terceiro<input name="numeroExterno" value="${esc(c.numeroExterno)}"></label><label>Analista<input name="analista" value="${esc(c.analista)}" data-auto="analistas" placeholder="DIGITE 2 LETRAS"></label><label>Prestador <button type="button" class="mini-inline" id="btnSugestaoInline">🎯 SUGERIR</button><input name="prestadorNome" id="prestadorNome" value="${esc(c.prestadorNome)}" data-auto="prestadores" placeholder="SUGESTÃO AUTOMÁTICA POR CIDADE/SERVIÇO"></label><label>Prioridade<select name="prioridade">${['MÍNIMA','MÉDIA','MÁXIMA'].map(s=>`<option ${norm(c.prioridade||'MÍNIMA')===s?'selected':''}>${s}</option>`).join('')}</select></label><label>Status<select name="status">${status}</select></label><label>Valor serviço<input name="valor" value="${esc(c.valor||0)}"></label><label>Data orçamento<input type="date" name="dataOrcamento" value="${esc(c.dataOrcamento)}"></label><label>Data agendada<input type="date" name="dataAgendada" value="${esc(c.dataAgendada)}"></label><label>Por conta proprietário?<select name="servicoProprietario"><option ${norm(c.servicoProprietario||'NÃO')==='NÃO'?'selected':''}>NÃO</option><option ${norm(c.servicoProprietario)==='SIM'?'selected':''}>SIM</option></select></label>`:`<div class="info span-full">MODO SIMPLES: USUÁRIO SEM PERMISSÃO DE TRATATIVA PREENCHE LOJA, TIPO DE SERVIÇO E DESCRIÇÃO. PRESTADOR, VALOR, STATUS E PRIORIDADE FICAM PARA O ANALISTA.</div>`;
+return page(req,edit?'Editar chamado':'Novo chamado',`<div class="bar"><h2>🎫 ${edit?'Editar':'Novo'} chamado</h2><a class="btn secondary" href="/chamados">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data">${hiddenAdvanced}<div class="grid4"><label>Loja<input name="lojaNome" value="${esc(c.lojaNome)}" data-auto="lojas" required placeholder="DIGITE 2 LETRAS PARA BUSCAR"></label><label>Tipo serviço<select name="tipoServicoTela" id="tipoServicoTela" ${avancado?'onchange="document.querySelector(`[name=tipoServico]`).value=this.value"':''}>${servicos}</select>${avancado?'':`<input type="hidden" name="tipoServico" id="tipoServico" value="${esc(c.tipoServico||'A DEFINIR')}">`}</label>${avancado?`<input type="hidden" name="tipoServico" id="tipoServico" value="${esc(c.tipoServico||'A DEFINIR')}">`:''}${avancadoHtml}</div><label>Descrição serviços<textarea name="descricao" required rows="5">${esc(c.descricao)}</textarea></label><label>Observações<textarea name="observacoes" rows="4">${esc(c.observacoes)}</textarea></label><label>Anexos/imagens<input type="file" name="anexos" multiple></label><div class="actions">${avancado?`<button type="button" id="btnSugestao">🎯 SUGERIR PRESTADOR</button><a class="btn secondary" href="/tipos-servico">🛠️ TIPOS DE SERVIÇO</a>`:''}<button>💾 SALVAR</button>${edit?`<a class="btn" href="/os/nova?q=${encodeURIComponent(c.numeroInterno||c.id)}">📄 GERAR O.S.</a>`:''}</div><div id="sugestoes" class="hint"></div><dialog id="modalPrestadores" class="modal"><h3>🎯 PRESTADORES DISPONÍVEIS</h3><div id="modalPrestadoresLista"></div><div class="actions"><button type="button" onclick="document.getElementById('modalPrestadores').close()">FECHAR</button></div></dialog></form>`);
 }
 
-/* PATCH V20.9.3 - URL segura para imagens/assinaturas */
+/* PATCH V20.9.4 - URL segura para imagens/assinaturas */
 function os2091PublicPath(v){
   if(!v) return '';
   if(typeof v === 'object') v = v.url || v.path || v.filename || v.dataUrl || '';
@@ -373,7 +360,7 @@ function os83Assinatura(d,req,chamados){
 }
 function os83WhatsappLink(tel,msg){ const n=dig(tel); return n?`https://wa.me/55${n}?text=${encodeURIComponent(msg)}`:''; }
 
-/* PATCH V20.9.3 - WHATSAPP LOJA/PRESTADOR COM LINK DA O.S. PARA PDF */
+/* PATCH V20.9.4 - WHATSAPP LOJA/PRESTADOR COM LINK DA O.S. PARA PDF */
 function os2092Phone(obj){
   obj=obj||{};
   return obj.whatsappResponsavel || obj.whatsapp_responsavel || obj.whatsappResponsavelLoja || obj.whatsapp_loja || obj.whatsapp || obj.celular || obj.telefoneResponsavel || obj.telefone_responsavel || obj.telefone || obj.fone || '';
@@ -577,7 +564,7 @@ function v158_excelDate(v){
 }
 function v158_clone(v){return JSON.parse(JSON.stringify(v??null))}
 function v158_atomicSave(d){
-  // PATCH V20.9.3: importação precisa salvar pela função oficial save(),
+  // PATCH V20.9.4: importação precisa salvar pela função oficial save(),
   // pois ela atualiza cache em memória e envia para Supabase.
   try{
     if(typeof save === 'function'){
@@ -585,7 +572,7 @@ function v158_atomicSave(d){
       return true;
     }
   }catch(e){
-    console.error('V20.9.3 erro save importação:', e.message || e);
+    console.error('V20.9.4 erro save importação:', e.message || e);
   }
   const tmp=DB_FILE+'.tmp';
   fs.writeFileSync(tmp, JSON.stringify(d,null,2),'utf8');
@@ -668,7 +655,7 @@ function v158_importCore(req, file){
   }
   d.usuarios=keep.usuarios; d.perfis=keep.perfis; if(keep.permissoes)d.permissoes=keep.permissoes; d.config={...keep.config,...(d.config||{}),next:{...((keep.config||{}).next||{}),...((d.config||{}).next||{})}};
   v158_atomicSave(d);
-  // PATCH V20.9.3: garante que a busca logo após importar leia os dados importados.
+  // PATCH V20.9.4: garante que a busca logo após importar leia os dados importados.
   try{ persistentCache = mergeDB(emptyDB(), d); }catch(e){}
   return {importados,lojasCriadas,prestCriados,ignoradas};
 }
@@ -1676,12 +1663,12 @@ app.get("/chamados/:id/os", auth, (req,res)=>res.redirect(`/os/${req.params.id}/
 
 app.get('/api/v2084/status', auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,versao:'V20.9.3',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
+  res.json({ok:true,versao:'V20.9.4',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
 });
 
 
 
-/* PATCH V20.9.3 - diagnóstico de importação/persistência */
+/* PATCH V20.9.4 - diagnóstico de importação/persistência */
 app.get('/api/v2087/status', auth, async (req,res)=>{
   try{
     const local = load();
@@ -1695,7 +1682,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
     }
     res.json({
       ok:true,
-      versao:'20.9.3',
+      versao:'20.9.4',
       supabaseConfigurado: !!(typeof supabasePersist !== 'undefined' && supabasePersist),
       erroRemoto,
       local:{
@@ -1718,7 +1705,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.9.3 - STATUS E REPARO */
+/* PATCH V20.9.4 - STATUS E REPARO */
 app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (req,res)=>{
   const d=load();
   let remoto=null, erroRemoto='';
@@ -1730,7 +1717,7 @@ app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (
     }
   }catch(e){ erroRemoto=e.message||String(e); }
   res.json({
-    ok:true, version:'V20.9.3',
+    ok:true, version:'V20.9.4',
     supabaseConfigurado:!!supabasePersist, supabaseOk, remoteLoaded, lastSaveOk, lastSaveAt, lastRemoteLoadAt, erro:lastPersistError || erroRemoto,
     local:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length},
     remoto: remoto&&remoto.data ? {updated_at:remoto.updated_at, usuarios:(remoto.data.usuarios||[]).length, lojas:(remoto.data.lojas||[]).length, prestadores:(remoto.data.prestadores||[]).length, proprietarios:(remoto.data.proprietarios||[]).length, chamados:(remoto.data.chamados||[]).length, os:(remoto.data.os||[]).length} : null
@@ -1742,7 +1729,7 @@ app.post('/api/v2090/force-save', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.9.3 - diagnóstico e hidratação manual de imagens */
+/* PATCH V20.9.4 - diagnóstico e hidratação manual de imagens */
 app.post('/api/v2093/hidratar-imagens', auth, async (req,res)=>{
   try{
     const d=hydratePersistentImages(load());
@@ -1757,7 +1744,7 @@ app.get('/api/v2093/status', auth, (req,res)=>{
   const logosData=(d.lojas||[]).filter(l=>l.logoLocal&&l.logoLocal.dataUrl).length;
   const ass=(d.usuarios||[]).filter(u=>u.assinatura||u.assinaturaDigital||u.assinaturaLocal).length;
   const assData=(d.usuarios||[]).filter(u=>(u.assinatura&&u.assinatura.dataUrl)||(u.assinaturaDigital&&u.assinaturaDigital.dataUrl)||(u.assinaturaLocal&&u.assinaturaLocal.dataUrl)).length;
-  res.json({ok:true,versao:'V20.9.3',logosComArquivo:logos,logosComDataUrl:logosData,assinaturasComArquivo:ass,assinaturasComDataUrl:assData,lastSaveOk,lastSaveAt,erro:lastPersistError});
+  res.json({ok:true,versao:'V20.9.4',logosComArquivo:logos,logosComDataUrl:logosData,assinaturasComArquivo:ass,assinaturasComDataUrl:assData,lastSaveOk,lastSaveAt,erro:lastPersistError});
 });
 
 app.use((req,res)=>res.status(404).send(page(req,'Página não encontrada',`<div class="card"><h2>❌ Página não encontrada</h2><p>A rota ${esc(req.path)} não foi localizada.</p><a class="btn" href="/">🏠 Início</a></div>`)));
@@ -1765,7 +1752,7 @@ app.use((err,req,res,nextfn)=>res.status(500).send(errorPage(req,err)));
 
 app.get(['/api/v2085/status','/api/persist-status'], auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,version:'V20.9.3',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
+  res.json({ok:true,version:'V20.9.4',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
 });
 app.post('/api/v2085/force-save', auth, async (req,res)=>{
   try{ await saveRemoteNow(load()); res.json({ok:true,lastSaveAt,erro:''}); }
@@ -1773,4 +1760,4 @@ app.post('/api/v2085/force-save', auth, async (req,res)=>{
 });
 
 await initPersistentDB();
-app.listen(PORT,()=>console.log('V&B Chamados V20.9.3 rodando na porta '+PORT));
+app.listen(PORT,()=>console.log('V&B Chamados V20.9.4 rodando na porta '+PORT));

@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-9-3-logos-assinaturas-persistentes",
-  "version": "20.9.3",
+  "name": "sistema-vestcasa-v20-9-4-chamado-unico-sugestao-prestador",
+  "version": "20.9.4",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",
