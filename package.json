@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-9-2-whatsapp-os-pdf",
-  "version": "20.9.2",
+  "name": "sistema-vestcasa-v20-9-3-logos-assinaturas-persistentes",
+  "version": "20.9.3",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",

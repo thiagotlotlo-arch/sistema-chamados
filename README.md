@@ -178,7 +178,7 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Ajuste para buscar assinatura digital cadastrada no usuário/analista e exibir na impressão da O.S.
 
 
-## V20.9.1 - VestCasa estabilizado
+## V20.9.3 - VestCasa estabilizado
 - Mantida a base VestCasa/V&B Chamados.
 - Supabase app_state protegido contra banco incompleto.
 - Corrigido WebSocket do Supabase em Node 20.
@@ -192,9 +192,16 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Inclui schema.sql e reset_banco_mantendo_config.sql.
 
 
-## V20.9.2
+## V20.9.3
 - Botão WhatsApp responsável da loja restaurado na impressão da O.S.
 - Botões WhatsApp enviam mensagem com link da O.S. para baixar/imprimir como PDF.
 - Melhor busca de telefone/WhatsApp da loja e do prestador em vários campos.
 - Removida duplicidade de valores na impressão da O.S.
 - Mantido layout da tela e impressão da O.S.
+
+
+## V20.9.3 - Logos e assinaturas persistentes
+- Logos locais e assinatura digital agora são gravados como dataUrl dentro do app_state/Supabase.
+- Corrige perda após reiniciar o Render.
+- Diagnóstico: /api/v2093/status.
+- Ação manual: POST /api/v2093/hidratar-imagens.
