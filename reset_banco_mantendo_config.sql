@@ -1,7 +1,7 @@
 -- LIMPAR BANCO MANTENDO CONFIG, USUÁRIOS, PERFIS E PERMISSÕES
 update public.app_state
 set data = jsonb_build_object(
-  'version', '20.9.0',
+  'version', '20.9.1',
   'config', coalesce(data->'config', '{}'::jsonb),
   'usuarios', coalesce(data->'usuarios', '[]'::jsonb),
   'perfis', coalesce(data->'perfis', '[]'::jsonb),

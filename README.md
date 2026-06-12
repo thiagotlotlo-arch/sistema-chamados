@@ -178,7 +178,7 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Ajuste para buscar assinatura digital cadastrada no usuário/analista e exibir na impressão da O.S.
 
 
-## V20.9.0 - VestCasa estabilizado
+## V20.9.1 - VestCasa estabilizado
 - Mantida a base VestCasa/V&B Chamados.
 - Supabase app_state protegido contra banco incompleto.
 - Corrigido WebSocket do Supabase em Node 20.

@@ -13,7 +13,7 @@ import WebSocket from "ws";
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);
 
-/* PATCH V20.9.0 - função de status fechado para evitar CLOSED IS NOT DEFINED */
+/* PATCH V20.9.1 - função de status fechado para evitar CLOSED IS NOT DEFINED */
 function closed(item){
   const s = String((item && (item.status || item.situacao || item.estado)) || item || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -22,7 +22,7 @@ function closed(item){
 }
 
 
-/* PATCH V20.9.0 - moeda BR correta: R$800,00 = 800.00 */
+/* PATCH V20.9.1 - moeda BR correta: R$800,00 = 800.00 */
 function v2088_moneyBR(v){
   if(v == null || v === '') return 0;
   if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -54,7 +54,7 @@ fs.mkdirSync(DATA_DIR,{recursive:true}); fs.mkdirSync(UPLOAD_DIR,{recursive:true
 const upload=multer({dest:UPLOAD_DIR,limits:{fileSize:30*1024*1024}});
 app.use(express.urlencoded({extended:true,limit:"50mb"}));
 
-/* PATCH V20.9.0 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
+/* PATCH V20.9.1 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
 function patchNomeLojaBody(req,res,next){
   try{
     if(req && req.body){
@@ -84,7 +84,7 @@ function now(){return new Date().toISOString()} function today(){return now().sl
 function dig(v){return String(v||'').replace(/\D/g,'')} function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function arr(v){return Array.isArray(v)?v:(v?[v]:[])} function money(v){return Number(String(v||0).replace(/[^\d,.-]/g,'').replace(',','.'))||0} function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} function br(v){const s=String(v||'').slice(0,10);const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s} function finalizado(s){return ['FINALIZADO','CANCELADO','FECHADO'].includes(norm(s))}
 
-/* PATCH V20.9.0 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
+/* PATCH V20.9.1 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
 function envTrim(name){ return String(process.env[name] || '').trim().replace(/^['\"]|['\"]$/g,''); }
 const SUPABASE_URL = envTrim('SUPABASE_URL') || envTrim('NEXT_PUBLIC_SUPABASE_URL');
 const SUPABASE_KEY = envTrim('SUPABASE_SERVICE_ROLE_KEY') || envTrim('SUPABASE_SERVICE_KEY') || envTrim('SUPABASE_KEY') || envTrim('SUPABASE_ANON_KEY');
@@ -126,7 +126,7 @@ async function initPersistentDB(){
   persistentCache = fallback;
   if(!supabasePersist){
     lastPersistError = 'SUPABASE NÃO CONFIGURADO. VERIFIQUE SUPABASE_URL E SUPABASE_SERVICE_ROLE_KEY NO RENDER.';
-    console.error('V20.9.0:', lastPersistError);
+    console.error('V20.9.1:', lastPersistError);
     return;
   }
   try{
@@ -136,23 +136,23 @@ async function initPersistentDB(){
       persistentCache = mergeDB(emptyDB(), data.data);
       fs.writeFileSync(DB_FILE, JSON.stringify(persistentCache,null,2),'utf8');
       supabaseOk = true; remoteLoaded = true; lastRemoteLoadAt = data.updated_at || new Date().toISOString(); lastPersistError='';
-      console.log('V20.9.0 carregado do Supabase app_state:', SUPABASE_STATE_ID);
+      console.log('V20.9.1 carregado do Supabase app_state:', SUPABASE_STATE_ID);
     }else{
       // Proteção: não apaga dados remotos nem força base vazia sem necessidade.
       if(dbHasRealData(fallback)){
         await saveRemoteNow(fallback);
-        console.log('V20.9.0 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
+        console.log('V20.9.1 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
       }else{
         const inicial = mergeDB(emptyDB(), {});
         persistentCache = inicial;
         await saveRemoteNow(inicial);
-        console.log('V20.9.0 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
+        console.log('V20.9.1 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
       }
       remoteLoaded = true;
     }
   }catch(e){
     supabaseOk = false; remoteLoaded = false; lastSaveOk = false; lastPersistError = e.message || String(e);
-    console.error('V20.9.0 ERRO SUPABASE:', lastPersistError);
+    console.error('V20.9.1 ERRO SUPABASE:', lastPersistError);
     console.error('IMPORTANTE: enquanto este erro existir, os dados ficam apenas temporários/local no Render. Rode o schema.sql e use SERVICE_ROLE_KEY.');
   }
 }
@@ -168,13 +168,13 @@ async function saveRemoteNow(d){
 function scheduleRemoteSave(d){
   persistentCache = mergeDB(emptyDB(), d);
   // Sempre grava JSON local também, mas fonte principal é Supabase.
-  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.0 erro JSON local:', e.message||e); }
+  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.1 erro JSON local:', e.message||e); }
   if(!supabasePersist){ lastSaveOk=false; lastPersistError='SUPABASE NÃO CONFIGURADO'; return; }
   if(savingRemote){ pendingRemote = true; return; }
   savingRemote = true;
   setTimeout(async()=>{
-    try{ await saveRemoteNow(persistentCache); console.log('V20.9.0 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
-    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.0 erro ao salvar Supabase:', lastPersistError); }
+    try{ await saveRemoteNow(persistentCache); console.log('V20.9.1 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
+    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.1 erro ao salvar Supabase:', lastPersistError); }
     finally{ savingRemote=false; if(pendingRemote){ pendingRemote=false; scheduleRemoteSave(persistentCache); } }
   }, 50);
 }
@@ -186,7 +186,7 @@ function auth(req,res,nextfn){if(!user(req))return res.redirect('/login');nextfn
 function fileObj(f){if(!f)return null;let o={original:f.originalname,path:'uploads/'+f.filename,filename:f.filename,mimetype:f.mimetype,size:f.size,at:now()};try{if((f.mimetype||'').startsWith('image/'))o.dataUrl='data:'+f.mimetype+';base64,'+fs.readFileSync(f.path).toString('base64')}catch(e){}return o} function oneFile(req,n){return fileObj(req.files?.[n]?.[0]||req.file)} function manyFiles(req,n){return (req.files?.[n]||[]).map(fileObj).filter(Boolean)} function publicFile(f){if(!f)return ''; if(typeof f==='string')return f; if(f.dataUrl)return f.dataUrl; return '/'+String(f.path||'').replace(/^\/+|\\/g,'/')} function appLogo(d){d=d||{};d.config=d.config||{};return publicFile(d.config.logoLocal)||d.config.logoUrl||d.config.logo||''}
 function menu(req){const items=[['/','🏠 Início','INICIO'],['/chamados','🎫 Chamados','CHAMADOS'],['/chamados-por-analista','👤 Chamados por Analista','CHAMADOS'],['/lojas','🏬 Lojas','LOJAS'],['/prestadores','🧰 Prestadores','PRESTADORES'],['/proprietarios','👥 Proprietários','PROPRIETARIOS'],['/lembretes','📌 Lembretes','LEMBRETES'],['/preventivas','🗓️ Preventivas','PREVENTIVAS'],['/os','📄 Ordens de Serviço','ORDENS_SERVICO'],['/importar-planilha','📥 Importar','IMPORTAR'],['/relatorios','📊 Relatórios','RELATORIOS'],['/ponto-horas','⏱️ Ponto/Horas','PONTO_HORAS'],['/config','⚙️ Config','CONFIG'],['/logout','🚪 Sair','INICIO']];return `<nav>${items.filter(i=>i[0]==='/logout'||can(req,i[2])).map(i=>`<a class="btn menu-btn" href="${i[0]}">${i[1]}</a>`).join('')}</nav>`}
 
-/* PATCH V20.9.0 - assinatura digital do analista na O.S. */
+/* PATCH V20.9.1 - assinatura digital do analista na O.S. */
 function v2088_publicImg(f){
   try{
     if(!f) return '';
@@ -228,7 +228,7 @@ function v2088_injetarAssinaturaOS(html,d,analista){
   }catch(e){ return html; }
 }
 
-function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.0</div><script src="/public/app.js"></script></body></html>`}
+function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.1</div><script src="/public/app.js"></script></body></html>`}
 function errorPage(req,e){console.error(e);return page(req,'Erro tratado',`<div class="card"><h2>⚠️ Erro tratado</h2><p>O sistema encontrou um erro nesta operação, mas não travou.</p><p><b>Detalhe:</b> ${esc(e?.message||String(e))}</p><a class="btn" href="/">🏠 Início</a> <a class="btn secondary" href="javascript:history.back()">↩️ Voltar</a></div>`)}
 function tabela(headers,rows,empty='Nenhum registro encontrado'){return `<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}">${esc(empty)}</td></tr>`}</tbody></table>`}
 function busca(action,ph){return `<form class="card search" method="get" action="${action}"><input name="q" placeholder="${esc(ph)}"><button>🔎 Buscar</button><a class="btn" href="${action}?mostrar=1">Mostrar todos</a><a class="btn secondary" href="${action}">Limpar</a></form>`}
@@ -267,7 +267,7 @@ function syncPreventiva(d,p){let l=d.lembretes.find(x=>String(x.preventivaId)===
 
 app.get('/login',(req,res)=>res.send(`<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login</title><link rel="stylesheet" href="/public/style.css"></head><body class="login-body"><form class="login-card" method="post"><div class="login-logo">VB</div><h1>V&B CHAMADOS</h1><label>Usuário<input name="usuario" autocomplete="username" autofocus></label><label>Senha<input type="password" name="senha" autocomplete="current-password"></label><label class="inline"><input type="checkbox" name="lembrar" value="SIM"> Salvar usuário</label><button>Entrar</button></form><script src="/public/app.js"></script></body></html>`));
 app.post('/login',(req,res)=>{const d=load();const u=d.usuarios.find(x=>norm(x.ativo||'SIM')!=='NÃO'&&norm(x.usuario)===norm(req.body.usuario)&&String(x.senha||'')===String(req.body.senha||''));if(!u)return res.send(page(req,'Login',`<div class="login-card"><p class="alert">Usuário ou senha inválidos.</p><a class="btn" href="/login">Tentar novamente</a></div>`));req.session.user={id:u.id,nome:u.nome,usuario:u.usuario,perfil:u.perfil,permissoes:u.permissoes||[]};res.redirect('/')}); app.get('/logout',(req,res)=>req.session.destroy(()=>res.redirect('/login')));
-/* PATCH V20.9.0 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
+/* PATCH V20.9.1 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
 app.get('/',auth,(req,res)=>{
   const d=load();
   const q=norm(req.query.q||'');
@@ -282,7 +282,7 @@ app.get('/',auth,(req,res)=>{
 function postit(l){const cor=norm(l.cor||'AMARELO').toLowerCase();const href=l.chamadoId?`/chamados/${l.chamadoId}/editar`:(l.preventivaId?`/preventivas/${l.preventivaId}/editar`:`/lembretes/${l.id}/editar`);return `<a class="postit ${cor}" href="${href}"><b>${esc(l.titulo)}</b><span>📅 ${br(l.data)} ${esc(l.hora||'')}</span><small>${esc(l.descricao||'')}</small></a>`}
 
 app.get('/api/autocomplete',auth,(req,res)=>{const d=load(),tipo=norm(req.query.tipo||'GERAL'),q=norm(req.query.q||''),di=dig(req.query.q||'');if(q.length<2&&di.length<2)return res.json({ok:true,items:[]});const items=[];const add=(tipo,id,label,value,sub,raw)=>items.push({tipo,id,label,value,sub,raw});if(['LOJAS','GERAL'].includes(tipo))d.lojas.forEach(l=>add('loja',l.id,l.nome,l.nome,[l.codigo,l.cidade,l.uf,l.cnpj,l.cep].filter(Boolean).join(' | '),l));if(['PRESTADORES','GERAL'].includes(tipo))d.prestadores.forEach(p=>add('prestador',p.id,p.empresa||p.responsavel,p.empresa||p.responsavel,[p.responsavel,p.cidade,p.uf,p.cnpj,(p.servicos||[]).join(',')].filter(Boolean).join(' | '),p));if(['PROPRIETARIOS','GERAL'].includes(tipo))d.proprietarios.forEach(p=>add('proprietario',p.id,p.nome,p.nome,[p.cidade,p.uf,p.cnpj,p.cpf].filter(Boolean).join(' | '),p));if(['ANALISTAS','USUARIOS','GERAL'].includes(tipo))d.usuarios.filter(u=>norm(u.ativo)!=='NÃO').forEach(u=>add('usuario',u.id,u.nome||u.usuario,u.nome||u.usuario,[u.usuario,u.perfil].filter(Boolean).join(' | '),u));if(['CHAMADOS','GERAL'].includes(tipo))d.chamados.forEach(c=>add('chamado',c.id,`${c.numeroInterno||c.id} - ${c.lojaNome||''}`,String(c.numeroInterno||c.id),[c.prestadorNome,c.status,c.tipoServico].filter(Boolean).join(' | '),c));if(['SERVICOS','GERAL'].includes(tipo))d.tiposServico.forEach(s=>add('servico',s,s,s,'Tipo de serviço',{nome:s}));const ok=items.filter(x=>norm([x.label,x.sub,JSON.stringify(x.raw)].join(' ')).includes(q)||di&&dig([x.label,x.sub].join(' ')).includes(di)).slice(0,40);res.json({ok:true,items:ok})});
-app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.0'}));
+app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.1'}));
 
 app.get('/config',auth,need('CONFIG'),(req,res)=>{const d=load(),c=d.config;res.send(page(req,'Config',`<section class="card"><h2>⚙️ Configurações</h2><form method="post" enctype="multipart/form-data" class="form"><div class="grid4"><label>Nome sistema<input name="nomeSistema" value="${esc(c.nomeSistema)}"></label><label>Subtítulo<input name="subtitulo" value="${esc(c.subtitulo)}"></label><label>Tema<select name="tema">${['VERDE','AZUL','ESCURO','ROXO','LARANJA'].map(t=>`<option ${norm(c.tema)===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Logo URL<input name="logoUrl" value="${esc(c.logoUrl)}"></label><label>Logo local<input type="file" name="logoLocal" accept="image/*"></label>${appLogo(d)?`<label>Logo atual<div class="logo-preview"><img src="${esc(appLogo(d))}" onerror="this.style.display='none'"></div></label>`:''}<label>Logo da O.S.<select name="usarLogoLojaOS"><option value="SIM" ${c.usarLogoLojaOS!=='NAO'?'selected':''}>REUTILIZAR LOGO DA LOJA</option><option value="NAO" ${c.usarLogoLojaOS==='NAO'?'selected':''}>USAR LOGO DA EMPRESA</option></select></label><label>Filial / nomes repetidos<select name="regraNomeFilial"><option value="ORIGINAL" ${c.regraNomeFilial==='ORIGINAL'?'selected':''}>ORIGINAL</option><option value="MESCLAR_NOME_CIDADE_UF" ${c.regraNomeFilial!=='ORIGINAL'?'selected':''}>MESCLAR NOME + CIDADE + UF</option></select></label></div><button>💾 Salvar</button></form></section><section class="card"><h2>Cadastros de apoio</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a><a class="btn" href="/perfis">🔐 Perfis/Permissões</a><a class="btn" href="/backup">💾 Backup/Restauração</a><a class="btn" href="/tipos-servico">🛠️ Tipos de serviço</a><a class="btn" href="/diagnostico">🩺 Diagnóstico</a></section>`))});
 app.post('/config',auth,need('CONFIG'),upload.single('logoLocal'),(req,res)=>{const d=load();Object.assign(d.config,{nomeSistema:norm(req.body.nomeSistema||d.config.nomeSistema),subtitulo:norm(req.body.subtitulo||d.config.subtitulo),tema:norm(req.body.tema||d.config.tema),logoUrl:(req.body.logoUrl||'').trim(),regraNomeFilial:req.body.regraNomeFilial||'ORIGINAL',usarLogoLojaOS:req.body.usarLogoLojaOS||d.config.usarLogoLojaOS||'SIM'});if(req.file)d.config.logoLocal=fileObj(req.file);save(d);res.redirect('/config')});
@@ -311,7 +311,7 @@ app.get('/chamados',auth,need('CHAMADOS'),(req,res)=>{const d=load(),q=norm(req.
 /* V16.1 - impressão de O.S. no padrão enviado pelo usuário */
 function osLogoEscolhido(d,loja){if((d.config.usarLogoLojaOS||'SIM')!=='NAO')return publicFile(loja.logoLocal)||loja.logoUrl||appLogo(d);return appLogo(d)||publicFile(loja.logoLocal)||loja.logoUrl}
 
-/* ================= PATCH V20.9.0 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
+/* ================= PATCH V20.9.1 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
 function os83State(){ return load(); }
 function os83Closed(c){ return finalizado(c.status) || finalizado(c.statusOs); }
 function os83Num(c){ return c.numeroInterno || c.numeroExterno || c.numero || c.id || ''; }
@@ -325,11 +325,24 @@ function os83UserByAnalista(d,req,nome){
          d.usuarios.find(u=>norm(u.nome)===norm(nome||'')) ||
          d.usuarios.find(u=>norm(u.usuario)===norm(nome||'')) || sess || {};
 }
+
+/* PATCH V20.9.1 - URL segura para imagens/assinaturas */
+function os2091PublicPath(v){
+  if(!v) return '';
+  if(typeof v === 'object') v = v.url || v.path || v.filename || v.dataUrl || '';
+  v=String(v||'').trim();
+  if(!v) return '';
+  if(v.startsWith('data:') || /^https?:\/\//i.test(v)) return v;
+  if(v.startsWith('/')) return v;
+  if(v.startsWith('uploads/')) return '/' + v;
+  return '/uploads/' + v;
+}
 function os83Assinatura(d,req,chamados){
   const nome=(chamados.find(c=>c.analista)?.analista)||user(req)?.nome||user(req)?.usuario||'';
   const u=os83UserByAnalista(d,req,nome);
-  const img=u.assinaturaDigital||u.assinatura||u.assinaturaUrl||u.imagemAssinatura||'';
-  return img ? `<img class="assinatura-digital-os" src="${esc(img)}"><br><span>${esc(u.nome||nome)}</span>` : `<span>${esc(u.nome||nome)}</span>`;
+  const raw=u.assinaturaDigital||u.assinatura||u.assinaturaUrl||u.imagemAssinatura||u.assinaturaLocal||u.fotoAssinatura||u.signature||u.signatureImage||'';
+  const img=os2091PublicPath(raw);
+  return img ? `<img class="assinatura-digital-os" src="${esc(img)}" onerror="this.style.display='none'"><br><span>${esc(u.nome||nome)}</span>` : `<span>${esc(u.nome||nome)}</span>`;
 }
 function os83WhatsappLink(tel,msg){ const n=dig(tel); return n?`https://wa.me/55${n}?text=${encodeURIComponent(msg)}`:''; }
 function os83Ids(v){ return arr(v).map(String); }
@@ -342,7 +355,7 @@ function os83ChamadosDaOS(d,os){
 
 app.get('/os',auth,need('ORDENS_SERVICO'),(req,res)=>{
   const d=os83State();
-  const rows=d.os.map(o=>`<tr><td>${esc(o.numero||o.numeroOs||o.id)}</td><td>${esc(o.lojaNome||'')}</td><td>${esc(o.prestadorNome||'')}</td><td>${os83Ids(o.chamados||o.chamadoIds).length}</td><td>${moeda(o.valorTotal||0)}</td><td><a class="btn small" href="/os-impressao/${o.id}">🖨️ VER/IMPRIMIR</a></td></tr>`);
+  const rows=d.os.map(o=>`<tr><td>${esc(o.numero||o.numeroOs||o.id)}</td><td>${esc(o.lojaNome||'')}</td><td>${esc(o.prestadorNome||'')}</td><td>${os83Ids(o.chamados||o.chamadoIds).length}</td><td>${moeda(o.valorTotal||0)}</td><td><a class="btn small" href="/os-impressao/${o.id}">🖨️ VER/IMPRIMIR</a> <a class="btn small secondary" href="/os/${o.id}/editar">✏️ EDITAR</a></td></tr>`);
   res.send(page(req,'ORDENS DE SERVIÇO',`<div class="bar"><h2>📄 ORDENS DE SERVIÇO</h2><a class="btn" href="/os/nova">➕ GERAR O.S.</a></div><div class="card">${tabela(['Nº','LOJA','PRESTADOR','CHAMADOS','VALOR','AÇÕES'],rows)}</div>`));
 });
 
@@ -355,7 +368,7 @@ app.get('/os/nova',auth,need('ORDENS_SERVICO'),(req,res)=>{
   const cards=Object.values(groups).map(ch=>{
     const first=ch[0]||{}, loja=first.lojaNome||first.loja||'SEM LOJA', prest=first.prestadorNome||first.prestador||'SEM PRESTADOR';
     const total=ch.reduce((s,c)=>s+money(c.valor),0);
-    const rows=ch.map(c=>`<tr><td><input type="checkbox" name="chamados" value="${esc(c.id)}"></td><td>${esc(os83Num(c))}</td><td>${esc(c.descricao||'')}</td><td>${esc(c.status||'ABERTO')}</td><td>${moeda(money(c.valor))}</td><td><a class="btn small" href="/os-impressao/chamado-${c.id}">IMPRIMIR</a></td></tr>`).join('');
+    const rows=ch.map(c=>`<tr><td><input type="checkbox" name="chamados" value="${esc(c.id)}"></td><td>${esc(os83Num(c))}</td><td>${esc(c.descricao||'')}</td><td>${esc(c.status||'ABERTO')}</td><td>${moeda(money(c.valor))}</td><td><a class="btn small" href="/os-impressao/chamado-${c.id}">IMPRIMIR</a> <a class="btn small secondary" href="/chamados/${c.id}/editar">EDITAR</a></td></tr>`).join('');
     return `<form class="card os-group" method="post" action="/os/gerar"><div class="os-head"><b>LOJA:</b> ${esc(loja)} <b>PRESTADOR:</b> ${esc(prest)} <b>${ch.length} CHAMADO(S)</b> ${moeda(total)}</div><div class="toolbar"><button type="button" onclick="this.closest('form').querySelectorAll('input[type=checkbox]').forEach(x=>x.checked=true)">✅ SELECIONAR TODOS DA LOJA/PRESTADOR</button><button>🖨️ GERAR O.S. / JUNÇÃO</button><button formaction="/os/fechar-selecionados" onclick="return confirm('FECHAR OS CHAMADOS SELECIONADOS?')">✅ FECHAR SELECIONADOS</button></div><table><thead><tr><th>SEL.</th><th>CHAMADO</th><th>DESCRIÇÃO</th><th>STATUS</th><th>VALOR</th><th>AÇÃO</th></tr></thead><tbody>${rows}</tbody></table></form>`;
   }).join('') || '<div class="card">NENHUM CHAMADO ABERTO PARA GERAR O.S.</div>';
   res.send(page(req,'GERAR O.S.',`<div class="bar"><h2>📄 GERAR/IMPRIMIR O.S. AGRUPADA</h2><a class="btn secondary" href="javascript:history.back()">VOLTAR</a></div><div class="card"><b>REGRA:</b> OS GRUPOS SÃO FORMADOS POR LOJA + PRESTADOR. USE “SELECIONAR TODOS” PARA JUNTAR OS CHAMADOS DO MESMO GRUPO.</div><form method="get" class="card search"><input name="q" placeholder="BUSCAR Nº, LOJA, PRESTADOR OU SERVIÇO" value="${esc(req.query.q||'')}"><button>BUSCAR</button><a class="btn secondary" href="/os/nova">LIMPAR</a></form>${cards}`));
@@ -384,6 +397,27 @@ app.post('/os/:id/fechar',auth,need('ORDENS_SERVICO'),async(req,res)=>{
   await save(d); res.redirect('/chamados');
 });
 
+
+app.get('/os/:id/editar',auth,need('ORDENS_SERVICO'),(req,res)=>{
+  const d=os83State(); const os=d.os.find(o=>String(o.id)===String(req.params.id));
+  if(!os) return res.redirect('/os');
+  const ch=os83ChamadosDaOS(d,os);
+  res.send(page(req,'EDITAR O.S.',`<div class="bar"><h2>✏️ EDITAR O.S. Nº ${esc(os.numero||os.numeroOs||os.id)}</h2><a class="btn secondary" href="javascript:history.back()">VOLTAR</a></div><form class="card form" method="post"><div class="grid4"><label>LOJA<input name="lojaNome" value="${esc(os.lojaNome||'')}" data-auto="lojas"></label><label>PRESTADOR<input name="prestadorNome" value="${esc(os.prestadorNome||'')}" data-auto="prestadores"></label><label>STATUS<select name="status"><option ${norm(os.status)==='ABERTA'?'selected':''}>ABERTA</option><option ${norm(os.status)==='FINALIZADO'?'selected':''}>FINALIZADO</option><option ${norm(os.status)==='CANCELADO'?'selected':''}>CANCELADO</option></select></label><label>VALOR TOTAL<input name="valorTotal" value="${esc(os.valorTotal||0)}"></label></div><label>OBSERVAÇÕES<textarea name="observacoes">${esc(os.observacoes||'')}</textarea></label><div class="card"><b>CHAMADOS VINCULADOS:</b><br>${ch.map(c=>`${esc(os83Num(c))} - ${esc(c.descricao||'')}`).join('<br>')||'NENHUM'}</div><button>💾 SALVAR O.S.</button><button formaction="/os/${esc(os.id)}/editar?imprimir=1">💾 SALVAR E IMPRIMIR</button></form>`));
+});
+app.post('/os/:id/editar',auth,need('ORDENS_SERVICO'),async(req,res)=>{
+  const d=os83State(); const os=d.os.find(o=>String(o.id)===String(req.params.id));
+  if(!os) return res.redirect('/os');
+  os.lojaNome=norm(req.body.lojaNome||os.lojaNome||'');
+  os.prestadorNome=norm(req.body.prestadorNome||os.prestadorNome||'');
+  os.status=norm(req.body.status||os.status||'ABERTA');
+  os.valorTotal=(typeof v2088_moneyBR==='function'?v2088_moneyBR(req.body.valorTotal):money(req.body.valorTotal));
+  os.observacoes=req.body.observacoes||'';
+  os.editadoEm=now(); os.editadoPor=user(req)?.nome||user(req)?.usuario||'';
+  await save(d);
+  if(req.query.imprimir==='1') return res.redirect('/os-impressao/'+os.id);
+  res.redirect('/os/nova');
+});
+
 app.get('/os-impressao/chamado-:id',auth,need('ORDENS_SERVICO'),(req,res)=>{
   const d=os83State(); const c=d.chamados.find(x=>String(x.id)===String(req.params.id));
   if(!c) return res.redirect('/os/nova');
@@ -410,10 +444,14 @@ function os83Print(req,res,d,os,ch){
   const inicio=ch.find(c=>c.dataAgendada)?.dataAgendada||'';
   const linkLoja=os83WhatsappLink(wLoja,'ORDEM DE SERVIÇO Nº '+numeros);
   const linkPrest=os83WhatsappLink(wPrest,'ORDEM DE SERVIÇO Nº '+numeros);
-  res.send(page(req,'O.S. Impressão',`<div class="bar no-print"><button onclick="window.print()">🖨️ IMPRIMIR</button><a class="btn" href="/os/nova">↩️ VOLTAR</a>${linkLoja?`<a class="btn" target="_blank" href="${linkLoja}">📲 WHATSAPP RESPONSÁVEL LOJA</a>`:''}${linkPrest?`<a class="btn" target="_blank" href="${linkPrest}">📲 WHATSAPP PRESTADOR</a>`:''}<form method="post" action="/os/${esc(os.id)}/fechar" style="display:inline"><button onclick="return confirm('FECHAR ESTA O.S. E TODOS OS CHAMADOS VINCULADOS?')">✅ FECHAR O.S.</button></form></div><section class="os-doc"><div class="os-top">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:''}<div class="os-title"><h1>ORDEM DE SERVIÇO</h1><h2>Nº : ${esc(numeros)}</h2></div></div><h3>DADOS DO REQUERENTE</h3><table class="os-table"><tr><th>LOJA:</th><td>${esc(os.lojaNome||loja.nome||first.lojaNome||'')}</td><th>NOME:</th><td>${esc(loja.responsavel||'')}</td><th>TELEFONE:</th><td>${esc(loja.telefone||wLoja||'')}</td></tr><tr><th>ENDEREÇO</th><td colspan="2">${esc(loja.endereco||'')}</td><th>CIDADE:</th><td colspan="2">${esc(loja.cidade||'')}${loja.uf?` - ${esc(loja.uf)}`:''}</td></tr><tr><th>CNPJ:</th><td colspan="2">${esc(loja.cnpj||'')}</td><th>CEP:</th><td colspan="2">${esc(loja.cep||'')}</td></tr></table><h3>DETALHES DA ORDEM DE SERVIÇO</h3><table class="os-table smalltbl"><tr><th>TÍTULO:</th><td>${esc(titulo)}</td></tr><tr><th>ATRIBUÍDO:</th><td>${esc(atribuido)}</td></tr></table><h3>DESCRIÇÃO DA ORDEM DE SERVIÇO</h3><div class="os-desc">${desc}</div><h3>PRESTADOR DE SERVIÇO</h3><div class="prest-lines">• <b>EMPRESA:</b> ${esc(prest.empresa||prest.nome||os.prestadorNome||'')} &nbsp;&nbsp; <b>CNPJ:</b> ${esc(prest.cnpj||'')}<br>• <b>NOME:</b> ${esc(prest.responsavel||prest.nome||'')} &nbsp;&nbsp; <b>TELEFONE:</b> ${esc(prest.telefone||wPrest||'')}<br>• <b>CPF/CNH:</b> ${esc(prest.cpfCnh||prest.cpf||'')}<br>• <b>DATA DE INÍCIO:</b> ${br(inicio)} &nbsp;&nbsp;&nbsp; <b>HORAS:</b><br>• <b>DATA DE FINALIZAÇÃO:</b> &nbsp;&nbsp;&nbsp; <b>HORAS:</b></div><h3>OBSERVAÇÕES</h3><div class="obs-box">${esc(os.observacoes||'')}</div><h3>TERMO DE RESPONSABILIDADE</h3><p class="termo">Declaro, para os devidos fins, que estou ciente dos riscos envolvidos na execução das atividades acima descritas e me comprometo a seguir integralmente todas as normas de segurança vigentes, os procedimentos internos da empresa e as boas práticas profissionais, utilizando adequadamente os Equipamentos de Proteção Individual (EPI) e os Equipamentos de Proteção Coletiva (EPC) necessários.<br><br>Estou ciente de que a execução de qualquer atividade em desacordo com as normas de segurança poderá resultar em penalidades legais, administrativas ou contratuais, conforme aplicável.<br><br><b>OBS:</b> Toda manutenção deve ser realizada por profissionais capacitados e deve-se utilizar prioritariamente medidas de proteção coletiva (EPC) e equipamentos de proteção individual (EPI), garantindo os procedimentos das normas vigentes de segurança do trabalho individual e coletivo.</p><div class="assin-os"><span>PRESTADOR DE SERVIÇO</span><span>REQUERENTE</span><span>ANALISTA<br>${os83Assinatura(d,req,ch)}</span></div></section>`));
+  const mostrarValor = req.query.valor !== '0' && req.query.semvalor !== '1';
+  const linkComValor = `/os-impressao/${encodeURIComponent(os.id)}?valor=1`;
+  const linkSemValor = `/os-impressao/${encodeURIComponent(os.id)}?semvalor=1`;
+  const valoresHtml = mostrarValor ? `<h3>VALORES</h3><div class="prest-lines"><b>TOTAL:</b> ${moeda(os.valorTotal||ch.reduce((s,c)=>s+money(c.valor),0))}</div>` : '';
+  res.send(page(req,'O.S. Impressão',`<div class="bar no-print"><button onclick="window.print()">🖨️ IMPRIMIR</button><a class="btn secondary" href="${linkComValor}">💰 COM VALOR</a><a class="btn secondary" href="${linkSemValor}">🚫 SEM VALOR</a><a class="btn" href="/os/nova">↩️ VOLTAR</a>${linkLoja?`<a class="btn" target="_blank" href="${linkLoja}">📲 WHATSAPP RESPONSÁVEL LOJA</a>`:''}${linkPrest?`<a class="btn" target="_blank" href="${linkPrest}">📲 WHATSAPP PRESTADOR</a>`:''}<form method="post" action="/os/${esc(os.id)}/fechar" style="display:inline"><button onclick="return confirm('FECHAR ESTA O.S. E TODOS OS CHAMADOS VINCULADOS?')">✅ FECHAR O.S.</button></form></div><section class="os-doc"><div class="os-top">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:''}<div class="os-title"><h1>ORDEM DE SERVIÇO</h1><h2>Nº : ${esc(numeros)}</h2></div></div><h3>DADOS DO REQUERENTE</h3><table class="os-table"><tr><th>LOJA:</th><td>${esc(os.lojaNome||loja.nome||first.lojaNome||'')}</td><th>NOME:</th><td>${esc(loja.responsavel||'')}</td><th>TELEFONE:</th><td>${esc(loja.telefone||wLoja||'')}</td></tr><tr><th>ENDEREÇO</th><td colspan="2">${esc(loja.endereco||'')}</td><th>CIDADE:</th><td colspan="2">${esc(loja.cidade||'')}${loja.uf?` - ${esc(loja.uf)}`:''}</td></tr><tr><th>CNPJ:</th><td colspan="2">${esc(loja.cnpj||'')}</td><th>CEP:</th><td colspan="2">${esc(loja.cep||'')}</td></tr></table><h3>DETALHES DA ORDEM DE SERVIÇO</h3><table class="os-table smalltbl"><tr><th>TÍTULO:</th><td>${esc(titulo)}</td></tr><tr><th>ATRIBUÍDO:</th><td>${esc(atribuido)}</td></tr></table><h3>DESCRIÇÃO DA ORDEM DE SERVIÇO</h3><div class="os-desc">${desc}</div><h3>PRESTADOR DE SERVIÇO</h3><div class="prest-lines">• <b>EMPRESA:</b> ${esc(prest.empresa||prest.nome||os.prestadorNome||'')} &nbsp;&nbsp; <b>CNPJ:</b> ${esc(prest.cnpj||'')}<br>• <b>NOME:</b> ${esc(prest.responsavel||prest.nome||'')} &nbsp;&nbsp; <b>TELEFONE:</b> ${esc(prest.telefone||wPrest||'')}<br>• <b>CPF/CNH:</b> ${esc(prest.cpfCnh||prest.cpf||'')}<br>• <b>DATA DE INÍCIO:</b> ${br(inicio)} &nbsp;&nbsp;&nbsp; <b>HORAS:</b><br>• <b>DATA DE FINALIZAÇÃO:</b> &nbsp;&nbsp;&nbsp; <b>HORAS:</b></div>${valoresHtml}${valoresHtml}<h3>OBSERVAÇÕES</h3><div class="obs-box">${esc(os.observacoes||'')}</div><h3>TERMO DE RESPONSABILIDADE</h3><p class="termo">Declaro, para os devidos fins, que estou ciente dos riscos envolvidos na execução das atividades acima descritas e me comprometo a seguir integralmente todas as normas de segurança vigentes, os procedimentos internos da empresa e as boas práticas profissionais, utilizando adequadamente os Equipamentos de Proteção Individual (EPI) e os Equipamentos de Proteção Coletiva (EPC) necessários.<br><br>Estou ciente de que a execução de qualquer atividade em desacordo com as normas de segurança poderá resultar em penalidades legais, administrativas ou contratuais, conforme aplicável.<br><br><b>OBS:</b> Toda manutenção deve ser realizada por profissionais capacitados e deve-se utilizar prioritariamente medidas de proteção coletiva (EPC) e equipamentos de proteção individual (EPI), garantindo os procedimentos das normas vigentes de segurança do trabalho individual e coletivo.</p><div class="assin-os"><span>PRESTADOR DE SERVIÇO</span><span>REQUERENTE</span><span>ANALISTA<br>${os83Assinatura(d,req,ch)}</span></div></section>`));
 }
 
-app.get('/os-impressao/:id',auth,need('ORDENS_SERVICO'),(req,res)=>{const d=load(),os=d.os.find(o=>String(o.id)===String(req.params.id));if(!os)return res.redirect('/os');const ch=d.chamados.filter(c=>arr(os.chamados).map(String).includes(String(c.id)));const loja=findLoja(d,os.lojaNome),prest=findPrestador(d,os.prestadorNome);const numeros=ch.map(c=>c.numeroInterno||c.numeroExterno||c.id).join(', ')||os.numero;const titulo=(ch.find(c=>c.tipoServico)?.tipoServico||'MANUTENÇÃO');const atribuido=(ch.find(c=>c.analista)?.analista||os.criadoPor||'');const logo=osLogoEscolhido(d,loja);const wLoja=loja.whatsappResponsavel||loja.telefone;const desc=ch.map(c=>`${esc(c.numeroInterno||c.id)} ${esc(c.descricao||c.observacoes||'')}`).join('<br>');const inicio=ch.find(c=>c.dataAgendada)?.dataAgendada||'';res.send(page(req,'O.S. Impressão',`<div class="bar no-print"><button onclick="window.print()">🖨️ Imprimir</button><a class="btn" href="/os">↩️ Voltar</a>${wLoja?`<a class="btn" target="_blank" href="https://wa.me/55${dig(wLoja)}?text=${encodeURIComponent('Ordem de Serviço Nº '+numeros)}">📲 WhatsApp responsável loja</a>`:''}${prest.telefone?`<a class="btn" target="_blank" href="https://wa.me/55${dig(prest.telefone)}?text=${encodeURIComponent('Ordem de Serviço Nº '+numeros)}">📲 WhatsApp prestador</a>`:''}</div><section class="os-doc"><div class="os-top">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:''}<div class="os-title"><h1>ORDEM DE SERVIÇO</h1><h2>Nº : ${esc(numeros)}</h2></div></div><h3>DADOS DO REQUERENTE</h3><table class="os-table"><tr><th>LOJA:</th><td>${esc(os.lojaNome||loja.nome)}</td><th>NOME:</th><td>${esc(loja.responsavel||'')}</td><th>Telefone:</th><td>${esc(loja.telefone||'')}</td></tr><tr><th>ENDEREÇO</th><td colspan="2">${esc(loja.endereco||'')}</td><th>CIDADE:</th><td colspan="2">${esc(loja.cidade||'')}${loja.uf?` - ${esc(loja.uf)}`:''}</td></tr><tr><th>CNPJ:</th><td colspan="2">${esc(loja.cnpj||'')}</td><th>CEP:</th><td colspan="2">${esc(loja.cep||'')}</td></tr></table><h3>DETALHES DA ORDEM DE SERVIÇO</h3><table class="os-table smalltbl"><tr><th>Título:</th><td>${esc(titulo)}</td></tr><tr><th>Atribuido:</th><td>${esc(atribuido)}</td></tr></table><h3>DESCRIÇÃO DA ORDEM DE SERVIÇO</h3><div class="os-desc">${desc}</div><h3>PRESTADOR DE SERVIÇO</h3><div class="prest-lines">• <b>EMPRESA:</b> ${esc(prest.empresa||os.prestadorNome||'')} &nbsp;&nbsp; <b>CNPJ:</b> ${esc(prest.cnpj||'')}<br>• <b>NOME:</b> ${esc(prest.responsavel||'')} &nbsp;&nbsp; <b>TELEFONE:</b> ${esc(prest.telefone||'')}<br>• <b>CPF/CNH:</b> ${esc(prest.cpfCnh||prest.cpf||'')}<br>• <b>DATA DE INICIO:</b> ${br(inicio)} &nbsp;&nbsp;&nbsp; <b>HORAS:</b><br>• <b>DATA DE FINALIZAÇÃO:</b> &nbsp;&nbsp;&nbsp; <b>HORAS:</b></div><h3>OBSERVAÇÕES</h3><div class="obs-box">${esc(os.observacoes||'')}</div><h3>TERMO DE RESPONSABILIDADE</h3><p class="termo">Declaro, para os devidos fins, que estou ciente dos riscos envolvidos na execução das atividades acima descritas e me comprometo a seguir integralmente todas as normas de segurança vigentes, os procedimentos internos da empresa e as boas práticas profissionais, utilizando adequadamente os Equipamentos de Proteção Individual (EPI) e os Equipamentos de Proteção Coletiva (EPC) necessários.<br><br>Estou ciente de que a execução de qualquer atividade em desacordo com as normas de segurança poderá resultar em penalidades legais, administrativas ou contratuais, conforme aplicável.<br><br><b>OBS:</b> Toda manutenção deve ser realizada por profissionais capacitados e deve-se utilizar prioritariamente medidas de proteção coletiva (EPC) e equipamentos de proteção individual (EPI), garantindo os procedimentos das normas vigentes de segurança do trabalho individual e coletivo.</p><div class="assin-os"><span>PRESTADOR DE SERVIÇO</span><span>REQUERENTE</span></div></section>`))});
+app.get('/os-impressao/:id',auth,need('ORDENS_SERVICO'),(req,res)=>{const d=load(),os=d.os.find(o=>String(o.id)===String(req.params.id));if(!os)return res.redirect('/os');const ch=d.chamados.filter(c=>arr(os.chamados).map(String).includes(String(c.id)));const loja=findLoja(d,os.lojaNome),prest=findPrestador(d,os.prestadorNome);const numeros=ch.map(c=>c.numeroInterno||c.numeroExterno||c.id).join(', ')||os.numero;const titulo=(ch.find(c=>c.tipoServico)?.tipoServico||'MANUTENÇÃO');const atribuido=(ch.find(c=>c.analista)?.analista||os.criadoPor||'');const logo=osLogoEscolhido(d,loja);const wLoja=loja.whatsappResponsavel||loja.telefone;const desc=ch.map(c=>`${esc(c.numeroInterno||c.id)} ${esc(c.descricao||c.observacoes||'')}`).join('<br>');const inicio=ch.find(c=>c.dataAgendada)?.dataAgendada||'';res.send(page(req,'O.S. Impressão',`<div class="bar no-print"><button onclick="window.print()">🖨️ Imprimir</button><a class="btn" href="/os">↩️ Voltar</a>${wLoja?`<a class="btn" target="_blank" href="https://wa.me/55${dig(wLoja)}?text=${encodeURIComponent('Ordem de Serviço Nº '+numeros)}">📲 WhatsApp responsável loja</a>`:''}${prest.telefone?`<a class="btn" target="_blank" href="https://wa.me/55${dig(prest.telefone)}?text=${encodeURIComponent('Ordem de Serviço Nº '+numeros)}">📲 WhatsApp prestador</a>`:''}</div><section class="os-doc"><div class="os-top">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:''}<div class="os-title"><h1>ORDEM DE SERVIÇO</h1><h2>Nº : ${esc(numeros)}</h2></div></div><h3>DADOS DO REQUERENTE</h3><table class="os-table"><tr><th>LOJA:</th><td>${esc(os.lojaNome||loja.nome)}</td><th>NOME:</th><td>${esc(loja.responsavel||'')}</td><th>Telefone:</th><td>${esc(loja.telefone||'')}</td></tr><tr><th>ENDEREÇO</th><td colspan="2">${esc(loja.endereco||'')}</td><th>CIDADE:</th><td colspan="2">${esc(loja.cidade||'')}${loja.uf?` - ${esc(loja.uf)}`:''}</td></tr><tr><th>CNPJ:</th><td colspan="2">${esc(loja.cnpj||'')}</td><th>CEP:</th><td colspan="2">${esc(loja.cep||'')}</td></tr></table><h3>DETALHES DA ORDEM DE SERVIÇO</h3><table class="os-table smalltbl"><tr><th>Título:</th><td>${esc(titulo)}</td></tr><tr><th>Atribuido:</th><td>${esc(atribuido)}</td></tr></table><h3>DESCRIÇÃO DA ORDEM DE SERVIÇO</h3><div class="os-desc">${desc}</div><h3>PRESTADOR DE SERVIÇO</h3><div class="prest-lines">• <b>EMPRESA:</b> ${esc(prest.empresa||os.prestadorNome||'')} &nbsp;&nbsp; <b>CNPJ:</b> ${esc(prest.cnpj||'')}<br>• <b>NOME:</b> ${esc(prest.responsavel||'')} &nbsp;&nbsp; <b>TELEFONE:</b> ${esc(prest.telefone||'')}<br>• <b>CPF/CNH:</b> ${esc(prest.cpfCnh||prest.cpf||'')}<br>• <b>DATA DE INICIO:</b> ${br(inicio)} &nbsp;&nbsp;&nbsp; <b>HORAS:</b><br>• <b>DATA DE FINALIZAÇÃO:</b> &nbsp;&nbsp;&nbsp; <b>HORAS:</b></div>${valoresHtml}${valoresHtml}<h3>OBSERVAÇÕES</h3><div class="obs-box">${esc(os.observacoes||'')}</div><h3>TERMO DE RESPONSABILIDADE</h3><p class="termo">Declaro, para os devidos fins, que estou ciente dos riscos envolvidos na execução das atividades acima descritas e me comprometo a seguir integralmente todas as normas de segurança vigentes, os procedimentos internos da empresa e as boas práticas profissionais, utilizando adequadamente os Equipamentos de Proteção Individual (EPI) e os Equipamentos de Proteção Coletiva (EPC) necessários.<br><br>Estou ciente de que a execução de qualquer atividade em desacordo com as normas de segurança poderá resultar em penalidades legais, administrativas ou contratuais, conforme aplicável.<br><br><b>OBS:</b> Toda manutenção deve ser realizada por profissionais capacitados e deve-se utilizar prioritariamente medidas de proteção coletiva (EPC) e equipamentos de proteção individual (EPI), garantindo os procedimentos das normas vigentes de segurança do trabalho individual e coletivo.</p><div class="assin-os"><span>PRESTADOR DE SERVIÇO</span><span>REQUERENTE</span></div></section>`))});
 app.get('/os',auth,need('ORDENS_SERVICO'),(req,res)=>{const d=load();res.send(page(req,'Ordens de Serviço',`<div class="bar"><h2>📄 Ordens de Serviço</h2><a class="btn" href="/os/nova">➕ Gerar O.S.</a></div><div class="card">${tabela(['Nº','Loja','Prestador','Chamados','Valor','Ações'],d.os.map(o=>`<tr><td>${esc(o.numero)}</td><td>${esc(o.lojaNome)}</td><td>${esc(o.prestadorNome)}</td><td>${arr(o.chamados).length}</td><td>${moeda(o.valorTotal)}</td><td><a class="btn small" href="/os-impressao/${o.id}">🖨️ Ver/Imprimir</a></td></tr>`))}</div>`))});app.get('/os/nova',auth,need('ORDENS_SERVICO'),(req,res)=>{const d=load(),q=norm(req.query.q||'');const lista=d.chamados.filter(c=>!finalizado(c.status)).filter(c=>!q||norm([c.numeroInterno,c.lojaNome,c.prestadorNome,c.descricao].join(' ')).includes(q));res.send(page(req,'Gerar O.S.',`<div class="bar"><h2>📄 Gerar O.S.</h2><a class="btn" href="/os">Voltar</a></div><form class="card search" method="get"><input name="q" placeholder="Buscar chamados abertos"><button>Buscar</button></form><form class="card" method="post" action="/os">${lista.map(c=>`<label class="checkline"><input type="checkbox" name="chamados" value="${c.id}"> ${esc(c.numeroInterno)} - ${esc(c.lojaNome)} - ${esc(c.prestadorNome)} - ${esc(c.descricao)} - ${moeda(c.valor)}</label>`).join('')||'Nenhum chamado aberto.'}<textarea name="observacoes" placeholder="Observações"></textarea><button>📄 Gerar impressão/O.S.</button></form>`))});app.post('/os',auth,need('ORDENS_SERVICO'),(req,res)=>{const d=load(),ids=arr(req.body.chamados).map(String),ch=d.chamados.filter(c=>ids.includes(String(c.id)));if(!ch.length)return res.redirect('/os/nova');const ref=Math.min(...ch.map(c=>Number(c.numeroInterno||c.id)));const os={id:next(d,'os'),numero:ref,lojaNome:ch[0].lojaNome,prestadorNome:ch[0].prestadorNome,chamados:ch.map(c=>c.id),valorTotal:ch.reduce((s,c)=>s+money(c.valor),0),observacoes:req.body.observacoes||'',criadoEm:now(),criadoPor:user(req).nome};d.os.push(os);ch.forEach(c=>c.osId=os.id);save(d);res.redirect(`/os-impressao/${os.id}`)});app.get('/os/:id',auth,need('ORDENS_SERVICO'),(req,res)=>{const d=load(),os=d.os.find(o=>String(o.id)===String(req.params.id));if(!os)return res.redirect('/os');const ch=d.chamados.filter(c=>arr(os.chamados).map(String).includes(String(c.id))),loja=findLoja(d,os.lojaNome),prest=findPrestador(d,os.prestadorNome),logo=publicFile(loja.logoLocal)||loja.logoUrl||appLogo(d);res.send(page(req,'O.S.',`<div class="bar no-print"><button onclick="window.print()">🖨️ Imprimir</button><a class="btn" href="/os">Voltar</a>${(loja.whatsappResponsavel||loja.telefone)?`<a class="btn" target="_blank" href="https://wa.me/55${dig(loja.whatsappResponsavel||loja.telefone)}?text=${encodeURIComponent('O.S. '+os.numero)}">📲 WhatsApp responsável loja</a>`:''}${prest.telefone?`<a class="btn" target="_blank" href="https://wa.me/55${dig(prest.telefone)}?text=${encodeURIComponent('O.S. '+os.numero)}">📲 WhatsApp prestador</a>`:''}</div><section class="os-print"><div class="os-head">${logo?`<img src="${esc(logo)}">`:''}<div><h1>ORDEM DE SERVIÇO</h1><h2>Nº: ${esc(os.numero)}</h2></div></div><h3>DADOS DO REQUERENTE</h3><div class="os-grid"><b>LOJA:</b><span>${esc(os.lojaNome)}</span><b>TELEFONE:</b><span>${esc(loja.telefone)}</span><b>ENDEREÇO:</b><span>${esc(loja.endereco)}</span><b>CIDADE:</b><span>${esc(loja.cidade)}/${esc(loja.uf)}</span><b>CNPJ:</b><span>${esc(loja.cnpj)}</span><b>CEP:</b><span>${esc(loja.cep)}</span></div><h3>DESCRIÇÃO DA ORDEM DE SERVIÇO</h3><ul>${ch.map(c=>`<li><b>${esc(c.numeroInterno)}</b> - ${esc(c.tipoServico)} - ${esc(c.descricao)} - ${moeda(c.valor)}</li>`).join('')}</ul><h3>PRESTADOR DE SERVIÇO</h3><div class="os-grid"><b>EMPRESA:</b><span>${esc(prest.empresa||os.prestadorNome)}</span><b>CNPJ:</b><span>${esc(prest.cnpj)}</span><b>NOME:</b><span>${esc(prest.responsavel)}</span><b>TELEFONE:</b><span>${esc(prest.telefone)}</span></div><p><b>VALOR TOTAL:</b> ${moeda(os.valorTotal)}</p><h3>TERMO DE RESPONSABILIDADE</h3><p class="small">O prestador declara estar ciente de que é de sua responsabilidade utilizar EPIs e seguir normas de segurança.</p><div class="assinaturas"><div>RESPONSÁVEL DA LOJA</div><div>PRESTADOR</div><div>ANALISTA</div>${v2088_assinaturaHtml(d, (os&&os.analista)||atribuido||analista||'')}</div></section>`))});
 
 app.get('/lembretes',auth,need('LEMBRETES'),(req,res)=>{const d=load();res.send(page(req,'Lembretes',`<div class="bar"><h2>📌 Lembretes / Post-it</h2><a class="btn" href="/lembretes/novo">➕ Novo</a></div><div class="postits">${d.lembretes.map(postit).join('')||'Nenhum lembrete.'}</div>`))});function lembreteForm(req,l={}){return page(req,'Lembrete',`<div class="bar"><h2>📌 Lembrete</h2><a class="btn" href="/lembretes">Voltar</a></div><form class="card form" method="post"><div class="grid4"><label>Título<input name="titulo" value="${esc(l.titulo)}" required></label><label>Data<input type="date" name="data" value="${esc(l.data||today())}"></label><label>Hora<input type="time" name="hora" value="${esc(l.hora)}"></label><label>Som<select name="som"><option>BIPE</option><option>SINO</option><option>ALARME</option></select></label><label>Analista<input name="analista" value="${esc(l.analista)}" data-auto="analistas"></label><label>Mostrar para todos<select name="mostrarTodos"><option ${norm(l.mostrarTodos||'NÃO')==='NÃO'?'selected':''}>NÃO</option><option ${norm(l.mostrarTodos)==='SIM'?'selected':''}>SIM</option></select></label><label>Cor<select name="cor">${['AMARELO','ROSA','AZUL','VERDE'].map(c=>`<option ${norm(l.cor||'AMARELO')===c?'selected':''}>${c}</option>`).join('')}</select></label><label>Fixar inicial<select name="fixarInicial"><option ${norm(l.fixarInicial||'SIM')==='SIM'?'selected':''}>SIM</option><option ${norm(l.fixarInicial)==='NÃO'?'selected':''}>NÃO</option></select></label><label>Chamado<input name="chamadoId" value="${esc(l.chamadoId)}" data-auto="chamados"></label></div><textarea name="descricao">${esc(l.descricao)}</textarea><button>💾 Salvar</button></form>`)}app.get('/lembretes/novo',auth,need('LEMBRETES'),(req,res)=>res.send(lembreteForm(req)));app.get('/lembretes/:id/editar',auth,need('LEMBRETES'),(req,res)=>res.send(lembreteForm(req,load().lembretes.find(l=>String(l.id)===String(req.params.id))||{})));app.post(['/lembretes/novo','/lembretes/:id/editar'],auth,need('LEMBRETES'),(req,res)=>{const d=load();let l=req.params.id?d.lembretes.find(x=>String(x.id)===String(req.params.id)):null;if(!l){l={id:next(d,'lembrete')};d.lembretes.push(l)}Object.assign(l,{titulo:norm(req.body.titulo),data:req.body.data,hora:req.body.hora,som:req.body.som,analista:norm(req.body.analista),mostrarTodos:norm(req.body.mostrarTodos),cor:norm(req.body.cor),fixarInicial:norm(req.body.fixarInicial),chamadoId:req.body.chamadoId,descricao:req.body.descricao});save(d);res.redirect('/lembretes')});
@@ -494,7 +532,7 @@ function v158_excelDate(v){
 }
 function v158_clone(v){return JSON.parse(JSON.stringify(v??null))}
 function v158_atomicSave(d){
-  // PATCH V20.9.0: importação precisa salvar pela função oficial save(),
+  // PATCH V20.9.1: importação precisa salvar pela função oficial save(),
   // pois ela atualiza cache em memória e envia para Supabase.
   try{
     if(typeof save === 'function'){
@@ -502,7 +540,7 @@ function v158_atomicSave(d){
       return true;
     }
   }catch(e){
-    console.error('V20.9.0 erro save importação:', e.message || e);
+    console.error('V20.9.1 erro save importação:', e.message || e);
   }
   const tmp=DB_FILE+'.tmp';
   fs.writeFileSync(tmp, JSON.stringify(d,null,2),'utf8');
@@ -585,7 +623,7 @@ function v158_importCore(req, file){
   }
   d.usuarios=keep.usuarios; d.perfis=keep.perfis; if(keep.permissoes)d.permissoes=keep.permissoes; d.config={...keep.config,...(d.config||{}),next:{...((keep.config||{}).next||{}),...((d.config||{}).next||{})}};
   v158_atomicSave(d);
-  // PATCH V20.9.0: garante que a busca logo após importar leia os dados importados.
+  // PATCH V20.9.1: garante que a busca logo após importar leia os dados importados.
   try{ persistentCache = mergeDB(emptyDB(), d); }catch(e){}
   return {importados,lojasCriadas,prestCriados,ignoradas};
 }
@@ -1395,7 +1433,18 @@ function v159_find_city(text){const up=v159_up(text);for(const [uf,cid,cep] of V
 async function v159_parse_pdf(filePath){const data=await pdfParse(fs.readFileSync(filePath));const raw=(data.text||"").replace(/\r/g,"\n");const lines=raw.split(/\n+/).map(x=>v159_up(x).replace(/\s+/g," ").trim()).filter(Boolean);const text=lines.join(" ");const cnpj=(text.match(/\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}/)||[])[0]||"";let cep=v159_cep(text);const tel=(text.match(/(?:\(?\d{2}\)?\s*)?\d{4,5}-?\d{4}/)||[])[0]||"";function pick(labels){for(const label of labels){const idx=lines.findIndex(l=>l.includes(label));if(idx>=0){const same=lines[idx].split(label).pop().replace(/^[:\-\s]+/,"").trim();if(same&&same.length>2&&!/(COMPROVANTE|CADASTRO|DATA|REPUBLICA|REPÚBLICA|EMAIL|E-MAIL|ENDERECO ELETRONICO|ENDEREÇO ELETRÔNICO|CNPJ|CEP|UF)$/.test(same))return same;for(let i=idx+1;i<Math.min(lines.length,idx+12);i++){const v=lines[i];if(v&&!/^(DATA|NUMERO|NÚMERO|COMPROVANTE|CADASTRO|REPUBLICA|REPÚBLICA|CNPJ|CEP|UF|PORTE|CODIGO|CÓDIGO|EMAIL|E-MAIL|ENDERECO ELETRONICO|ENDEREÇO ELETRÔNICO)$/.test(v))return v;}}}return "";}
 let nome=pick(["TITULO DO ESTABELECIMENTO","TÍTULO DO ESTABELECIMENTO","NOME DE FANTASIA","NOME EMPRESARIAL","RAZAO SOCIAL","RAZÃO SOCIAL"]);const rootCnpj=v159_dig(cnpj).slice(0,8);if(rootCnpj==="31035833"||text.includes("MEGA VEST CASA")||text.includes("VESTCASA")||(text.includes("VEST")&&text.includes("CASA")))nome="MEGA VEST CASA";if(!nome)nome=lines.find(l=>/\b(MEGA VEST CASA|VEST CASA|VESTCASA|BURDAYS|BURDAY|LTDA|EIRELI|EPP|ME)\b/.test(l)&&!/ENDERECO|ENDEREÇO|ELETRONICO|ELETRÔNICO|COMPROVANTE|CADASTRO|ATIVIDADE/.test(l))||"";let cidade=pick(["MUNICIPIO","MUNICÍPIO","CIDADE"]);let uf=pick(["UF"]);const fc=v159_find_city(text);if(!cidade||cidade.length<3)cidade=fc.cidade;if(!v159_uf(uf))uf=fc.uf||v159_uf(text);if(!cep&&fc.cep)cep=fc.cep;let endereco=pick(["LOGRADOURO","ENDERECO","ENDEREÇO"]);return {nome:v159_clean_nome(nome)||"MEGA VEST CASA",cnpj:v159_dig(cnpj),cep:v159_dig(cep),telefone:v159_dig(tel),cidade:v159_clean_cidade(cidade),uf:v159_uf(uf),estado:v159_uf(uf),endereco:v159_up(endereco).replace(/\b(CEP|UF|MUNICIPIO|MUNICÍPIO|ENDERECO ELETRONICO|ENDEREÇO ELETRÔNICO)\b/g," ").replace(/\s+/g," ").trim()};}
 function v159_regra(config){const r=v159_up(config?.regraNomeFilial||config?.filialNomesRepetidos||"");return r.includes("MESCLAR")||r.includes("CIDADE")||r.includes("UF");}
-function v159_nome_loja(parsed,config,fallback){let nome=v159_clean_nome(parsed.nome||fallback||"");if(!nome)nome="MEGA VEST CASA";const cidade=v159_clean_cidade(parsed.cidade||"");const uf=v159_uf(parsed.uf||parsed.estado||"");if(v159_regra(config)&&nome&&cidade)return `${nome} ${cidade} ${uf}`.replace(/\s+/g," ").trim();return nome||fallback||"";}
+function v159_nome_loja(parsed,config,fallback){
+  parsed=parsed||{};
+  const fb=v159_up(fallback||"");
+  // Se NÃO veio PDF novo, preserva exatamente o nome que está no formulário/cadastro.
+  if(!parsed.nome && !parsed.cidade && !parsed.uf && fb) return fb;
+  let nome=v159_clean_nome(parsed.nome||fallback||"");
+  if(!nome)nome="MEGA VEST CASA";
+  const cidade=v159_clean_cidade(parsed.cidade||"");
+  const uf=v159_uf(parsed.uf||parsed.estado||"");
+  if(v159_regra(config)&&nome&&cidade)return `${nome} ${cidade} ${uf}`.replace(/\s+/g," ").trim();
+  return nome||fb||"";
+}
 const v159_upload=upload.fields([{name:"pdf",maxCount:1},{name:"logoLocal",maxCount:1},{name:"cartaoCnpj",maxCount:1},{name:"fotos",maxCount:20}]);
 async function v159_save_loja_pdf(req,res){try{const d=v159_db();d.lojas=Array.isArray(d.lojas)?d.lojas:[];d.config=d.config||{};let l=req.params.id?d.lojas.find(x=>String(x.id)===String(req.params.id)):null;if(!l){l={id:v159_next(d,"loja")};d.lojas.push(l);}const parsed=v159_file(req,"pdf")?await v159_parse_pdf(v159_file(req,"pdf").path):{};Object.assign(l,{codigo:req.body.codigo||l.codigo||l.id,tipoCodigo:req.body.tipoCodigo||l.tipoCodigo||"SOMENTE NÚMERO",nome:v159_nome_loja(parsed,d.config,req.body.nome||l.nome),responsavel:v159_up(req.body.responsavel||l.responsavel),cnpj:v159_dig(parsed.cnpj||req.body.cnpj||l.cnpj),ie:v159_up(req.body.ie||l.ie),telefone:v159_dig(parsed.telefone||req.body.telefone||l.telefone),whatsappResponsavel:v159_dig(req.body.whatsappResponsavel||l.whatsappResponsavel),cep:v159_dig(parsed.cep||req.body.cep||l.cep),uf:v159_uf(parsed.uf||req.body.uf||req.body.estado||l.uf||l.estado),estado:v159_uf(parsed.uf||req.body.uf||req.body.estado||l.uf||l.estado),cidade:v159_clean_cidade(parsed.cidade||req.body.cidade||l.cidade),endereco:v159_up(parsed.endereco||req.body.endereco||l.endereco),latitude:req.body.latitude||l.latitude||"",longitude:req.body.longitude||l.longitude||"",analista:v159_up(req.body.analista||l.analista),proprietario:v159_up(req.body.proprietario||l.proprietario),feriado:v159_up(req.body.feriado||l.feriado||"FECHADO"),logoUrl:req.body.logoUrl||l.logoUrl||"",horario:req.body.horario||l.horario||""});if(v159_file(req,"logoLocal"))l.logoLocal=v159_file_obj(v159_file(req,"logoLocal"));if(v159_file(req,"cartaoCnpj"))l.cartaoCnpj=v159_file_obj(v159_file(req,"cartaoCnpj"));l.fotos=[...v159_arr(l.fotos),...((req.files?.fotos||[]).map(v159_file_obj))];v159_save(d);res.redirect(`/lojas/${l.id}/editar`);}catch(e){res.status(500).send(v159_err(req,e));}}
 app.post("/v159/loja-pdf", auth, v159_perm("LOJAS"), v159_upload, v159_save_loja_pdf);
@@ -1582,12 +1631,12 @@ app.get("/chamados/:id/os", auth, (req,res)=>res.redirect(`/os/${req.params.id}/
 
 app.get('/api/v2084/status', auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,versao:'V20.9.0',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
+  res.json({ok:true,versao:'V20.9.1',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
 });
 
 
 
-/* PATCH V20.9.0 - diagnóstico de importação/persistência */
+/* PATCH V20.9.1 - diagnóstico de importação/persistência */
 app.get('/api/v2087/status', auth, async (req,res)=>{
   try{
     const local = load();
@@ -1601,7 +1650,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
     }
     res.json({
       ok:true,
-      versao:'20.9.0',
+      versao:'20.9.1',
       supabaseConfigurado: !!(typeof supabasePersist !== 'undefined' && supabasePersist),
       erroRemoto,
       local:{
@@ -1624,7 +1673,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.9.0 - STATUS E REPARO */
+/* PATCH V20.9.1 - STATUS E REPARO */
 app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (req,res)=>{
   const d=load();
   let remoto=null, erroRemoto='';
@@ -1636,7 +1685,7 @@ app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (
     }
   }catch(e){ erroRemoto=e.message||String(e); }
   res.json({
-    ok:true, version:'V20.9.0',
+    ok:true, version:'V20.9.1',
     supabaseConfigurado:!!supabasePersist, supabaseOk, remoteLoaded, lastSaveOk, lastSaveAt, lastRemoteLoadAt, erro:lastPersistError || erroRemoto,
     local:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length},
     remoto: remoto&&remoto.data ? {updated_at:remoto.updated_at, usuarios:(remoto.data.usuarios||[]).length, lojas:(remoto.data.lojas||[]).length, prestadores:(remoto.data.prestadores||[]).length, proprietarios:(remoto.data.proprietarios||[]).length, chamados:(remoto.data.chamados||[]).length, os:(remoto.data.os||[]).length} : null
@@ -1652,7 +1701,7 @@ app.use((err,req,res,nextfn)=>res.status(500).send(errorPage(req,err)));
 
 app.get(['/api/v2085/status','/api/persist-status'], auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,version:'V20.9.0',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
+  res.json({ok:true,version:'V20.9.1',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
 });
 app.post('/api/v2085/force-save', auth, async (req,res)=>{
   try{ await saveRemoteNow(load()); res.json({ok:true,lastSaveAt,erro:''}); }
@@ -1660,4 +1709,4 @@ app.post('/api/v2085/force-save', auth, async (req,res)=>{
 });
 
 await initPersistentDB();
-app.listen(PORT,()=>console.log('V&B Chamados V20.9.0 rodando na porta '+PORT));
+app.listen(PORT,()=>console.log('V&B Chamados V20.9.1 rodando na porta '+PORT));

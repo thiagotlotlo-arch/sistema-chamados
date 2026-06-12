@@ -143,3 +143,18 @@ body,button,input,select,textarea,label,span,p,a,td,th,h1,h2,h3,h4,h5,h6{ text-t
   .btn,button{font-size:14px;padding:9px 10px}
 }
 @media print{.assinatura-digital{max-width:145px;max-height:48px}}
+
+/* PATCH V20.9.1 RELATORIOS PRINT */
+@media print{
+  .rel-grid{display:block!important}
+  .rel-grid .card{break-inside:avoid;page-break-inside:avoid;margin:0 0 8px 0!important}
+  table{page-break-inside:auto!important;border-collapse:collapse!important;width:100%!important}
+  thead{display:table-header-group!important}
+  tfoot{display:table-footer-group!important}
+  tr{page-break-inside:avoid!important;break-inside:avoid!important}
+  th,td{font-size:8.5px!important;padding:3px 4px!important}
+  .card{box-shadow:none!important;border:0!important;padding:6px!important}
+  h2,h3{page-break-after:avoid!important}
+  @page{size:A4;margin:7mm}
+}
+.assinatura-digital-os{max-width:150px;max-height:48px;object-fit:contain;display:block;margin:0 auto 2px auto}

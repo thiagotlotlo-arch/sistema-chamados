@@ -1,4 +1,4 @@
--- SCHEMA V20.9.0 - SISTEMA VESTCASA / V&B CHAMADOS
+-- SCHEMA V20.9.1 - SISTEMA VESTCASA / V&B CHAMADOS
 create table if not exists public.app_state (
   id text primary key default 'default',
   data jsonb not null default '{}'::jsonb,
@@ -9,7 +9,7 @@ insert into public.app_state (id, data, updated_at)
 values (
   'default',
   jsonb_build_object(
-    'version','20.9.0',
+    'version','20.9.1',
     'config', jsonb_build_object(
       'next', jsonb_build_object('usuario',2,'perfil',4,'loja',1,'prestador',1,'proprietario',1,'chamado',1,'numeroChamado',1,'os',1,'lembrete',1,'preventiva',1,'ponto',1),
       'nomeSistema','V&B CHAMADOS',
