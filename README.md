@@ -214,3 +214,11 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Sugestão automática de prestador por loja/cidade/UF/tipo de serviço.
 - Janela modal com prestadores disponíveis para a área.
 - Mantidas as demais funções e layouts existentes.
+
+## V20.9.5
+- Importação de planilha com deduplicação inteligente.
+- Loja é associada por código/filial, nome normalizado, cidade e UF.
+- Prestador é associado por telefone quando existir, senão por nome normalizado.
+- Chamados já existentes são ignorados pelo número + loja + prestador.
+- Nova importação verifica cadastros já existentes no sistema antes de criar.
+- Rota de manutenção: POST /manutencao/deduplicar-cadastros.
