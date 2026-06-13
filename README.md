@@ -230,3 +230,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Cartão CNPJ e fotos da loja salvos em dataUrl no banco e com botão para abrir depois.
 - Opção de reutilizar logo da empresa ou de loja já cadastrada.
 - Mantida base/layout V20.8.
+
+## V20.8.18 - correção urgente de salvamento Supabase
+- Toda operação POST/PUT/PATCH/DELETE agora força gravação no Supabase antes de responder/redirect.
+- Mantém backup local JSON, mas a fonte principal continua `public.app_state`.
+- Adicionado `/api/persist/status` para conferir se está salvando no banco.
+- Adicionado `/api/persist/flush` para forçar salvamento manual.
+- Incluído `schema.sql` seguro para tabela `app_state`.

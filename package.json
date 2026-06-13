@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-8-17-lojas-fix",
-  "version": "20.8.17",
+  "name": "sistema-vestcasa-v20-8-18-supabase-save-fix",
+  "version": "20.8.18",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",
