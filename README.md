@@ -237,3 +237,11 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Adicionado `/api/persist/status` para conferir se está salvando no banco.
 - Adicionado `/api/persist/flush` para forçar salvamento manual.
 - Incluído `schema.sql` seguro para tabela `app_state`.
+
+## V20.8.19 - correção geral de salvamento
+- Corrigido salvamento global sem alterar estrutura/layout.
+- Toda rota de cadastro/edição POST/PUT/PATCH/DELETE força persistência antes de responder.
+- Rotas POST que carregavam banco e não chamavam save(d) receberam save automático.
+- Diagnóstico: /api/save/status
+- Flush manual: POST /api/save/flush
+- schema.sql atualizado para app_state.

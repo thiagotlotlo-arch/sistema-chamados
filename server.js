@@ -14,7 +14,7 @@ import PDFDocument from "pdfkit";
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);
 
-/* PATCH V20.8.18 - função de status fechado para evitar CLOSED IS NOT DEFINED */
+/* PATCH V20.8.19 - função de status fechado para evitar CLOSED IS NOT DEFINED */
 function closed(item){
   const s = String((item && (item.status || item.situacao || item.estado)) || item || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -23,7 +23,7 @@ function closed(item){
 }
 
 
-/* PATCH V20.8.18 - moeda BR correta: R$800,00 = 800.00 */
+/* PATCH V20.8.19 - moeda BR correta: R$800,00 = 800.00 */
 function v2088_moneyBR(v){
   if(v == null || v === '') return 0;
   if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -47,7 +47,7 @@ function v2088_moneyBR(v){
 }
 
 
-/* PATCH V20.8.18 - consolidação das correções pedidas mantendo estrutura V20.8 */
+/* PATCH V20.8.19 - consolidação das correções pedidas mantendo estrutura V20.8 */
 function v20816_nomeLojaFinal(req,l){
  const b=req.body||{};
  let nome=String(b.nome||b.nomeTratadoPdf||b.nomeLoja||b.lojaNome||l.nome||'').trim().toUpperCase().replace(/\s+/g,' ');
@@ -81,7 +81,7 @@ function v20816_pdfUrl(req,id,show=true){return `${req.protocol}://${req.get('ho
 function v20816_wa(tel,msg){tel=dig(tel);if(!tel)return '#';if(!tel.startsWith('55'))tel='55'+tel;return `https://wa.me/${tel}?text=${encodeURIComponent(msg)}`;}
 
 
-/* PATCH V20.8.18 - LOJA: salvar nome editado, anexos/cartão CNPJ persistentes e reutilizar logo */
+/* PATCH V20.8.19 - LOJA: salvar nome editado, anexos/cartão CNPJ persistentes e reutilizar logo */
 function v20817_normNomeLoja(req,l){
   const b = req.body || {};
   let nome = String(b.nome || b.nomeLoja || b.lojaNome || b.nomeTratadoPdf || l.nome || '').trim().toUpperCase().replace(/\s+/g,' ');
@@ -177,6 +177,7 @@ app.use(session({secret:process.env.SESSION_SECRET||"vb-v14-secret",resave:false
 app.use('/public',express.static(path.join(__dirname,'public')));
 app.use('/uploads',express.static(UPLOAD_DIR));
 installStrongSaveMiddleware(app);
+v20819_installResponseFlush(app);
 
 const PERMS=["TODAS","INICIO","CHAMADOS","CHAMADOS_EDITAR","LOJAS","PRESTADORES","PROPRIETARIOS","LEMBRETES","PREVENTIVAS","ORDENS_SERVICO","IMPORTAR","RELATORIOS","PONTO_HORAS","CONFIG","USUARIOS","BACKUP","SUPERVISOR","FINANCEIRO"];
 const DEFAULT_SERVICOS=["A DEFINIR","FAZ TUDO","ELETRICISTA","ENCANADOR","SERRALHEIRO","CHAVEIRO","AR CONDICIONADO","DEDETIZAÇÃO","JARDINAGEM","LIMPEZA","PORTAS AUTOMÁTICAS","FILTRO","PINTURA","MANUTENÇÃO","VIDRACEIRO","REFRIGERAÇÃO","REDE LÓGICA"];
@@ -185,7 +186,7 @@ function now(){return new Date().toISOString()} function today(){return now().sl
 function dig(v){return String(v||'').replace(/\D/g,'')} function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function arr(v){return Array.isArray(v)?v:(v?[v]:[])} function money(v){return Number(String(v||0).replace(/[^\d,.-]/g,'').replace(',','.'))||0} function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} function br(v){const s=String(v||'').slice(0,10);const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s} function finalizado(s){return ['FINALIZADO','CANCELADO','FECHADO'].includes(norm(s))}
 
-/* PATCH V20.8.18 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
+/* PATCH V20.8.19 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
 function envTrim(name){ return String(process.env[name] || '').trim().replace(/^['\"]|['\"]$/g,''); }
 const SUPABASE_URL = envTrim('SUPABASE_URL') || envTrim('NEXT_PUBLIC_SUPABASE_URL');
 const SUPABASE_KEY = envTrim('SUPABASE_SERVICE_ROLE_KEY') || envTrim('SUPABASE_SERVICE_KEY') || envTrim('SUPABASE_KEY') || envTrim('SUPABASE_ANON_KEY');
@@ -193,7 +194,7 @@ const SUPABASE_STATE_ID = envTrim('SUPABASE_STATE_ID') || 'default';
 const supabasePersist = (SUPABASE_URL && SUPABASE_KEY) ? createClient(SUPABASE_URL, SUPABASE_KEY, {
   auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false },
   realtime: { transport: WebSocket },
-  global: { headers: { 'x-application-name': 'vbchamados-v20-8-18' } }
+  global: { headers: { 'x-application-name': 'vbchamados-v20-8-19' } }
 }) : null;
 let persistentCache = null;
 let supabaseOk = false;
@@ -225,7 +226,7 @@ async function initPersistentDB(){
   persistentCache = fallback;
   if(!supabasePersist){
     lastPersistError = 'SUPABASE NÃO CONFIGURADO. VERIFIQUE SUPABASE_URL E SUPABASE_SERVICE_ROLE_KEY NO RENDER.';
-    console.error('V20.8.18:', lastPersistError);
+    console.error('V20.8.19:', lastPersistError);
     return;
   }
   try{
@@ -235,23 +236,23 @@ async function initPersistentDB(){
       persistentCache = mergeDB(emptyDB(), data.data);
       fs.writeFileSync(DB_FILE, JSON.stringify(persistentCache,null,2),'utf8');
       supabaseOk = true; remoteLoaded = true; lastRemoteLoadAt = data.updated_at || new Date().toISOString(); lastPersistError='';
-      console.log('V20.8.18 carregado do Supabase app_state:', SUPABASE_STATE_ID);
+      console.log('V20.8.19 carregado do Supabase app_state:', SUPABASE_STATE_ID);
     }else{
       // Proteção: não apaga dados remotos nem força base vazia sem necessidade.
       if(dbHasRealData(fallback)){
         await saveRemoteNow(fallback);
-        console.log('V20.8.18 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
+        console.log('V20.8.19 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
       }else{
         const inicial = mergeDB(emptyDB(), {});
         persistentCache = inicial;
         await saveRemoteNow(inicial);
-        console.log('V20.8.18 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
+        console.log('V20.8.19 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
       }
       remoteLoaded = true;
     }
   }catch(e){
     supabaseOk = false; remoteLoaded = false; lastSaveOk = false; lastPersistError = e.message || String(e);
-    console.error('V20.8.18 ERRO SUPABASE:', lastPersistError);
+    console.error('V20.8.19 ERRO SUPABASE:', lastPersistError);
     console.error('IMPORTANTE: enquanto este erro existir, os dados ficam apenas temporários/local no Render. Rode o schema.sql e use SERVICE_ROLE_KEY.');
   }
 }
@@ -267,19 +268,19 @@ async function saveRemoteNow(d){
 function scheduleRemoteSave(d){
   persistentCache = mergeDB(emptyDB(), d);
   // Sempre grava JSON local também, mas fonte principal é Supabase.
-  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.8.18 erro JSON local:', e.message||e); }
+  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.8.19 erro JSON local:', e.message||e); }
   if(!supabasePersist){ lastSaveOk=false; lastPersistError='SUPABASE NÃO CONFIGURADO'; return; }
   if(savingRemote){ pendingRemote = true; return; }
   savingRemote = true;
   setTimeout(async()=>{
-    try{ await saveRemoteNow(persistentCache); console.log('V20.8.18 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
-    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.8.18 erro ao salvar Supabase:', lastPersistError); }
+    try{ await saveRemoteNow(persistentCache); console.log('V20.8.19 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
+    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.8.19 erro ao salvar Supabase:', lastPersistError); }
     finally{ savingRemote=false; if(pendingRemote){ pendingRemote=false; scheduleRemoteSave(persistentCache); } }
   }, 50);
 }
 function emptyDB(){return {version:'15.8.0',config:{next:{usuario:2,perfil:4,loja:1,prestador:1,proprietario:1,chamado:1,numeroChamado:1,os:1,lembrete:1,preventiva:1,ponto:1},nomeSistema:'V&B CHAMADOS',subtitulo:'CHAMADOS DE MANUTENÇÃO',tema:'VERDE',logoUrl:'',logoLocal:null,regraNomeFilial:'MESCLAR_NOME_CIDADE_UF',usarLogoLojaOS:'SIM'},usuarios:[{id:1,nome:'OLITECH',usuario:'OLITECH',senha:'051309',perfil:'ADMIN',ativo:'SIM',analista:'SIM',permissoes:['TODAS']}],perfis:[{id:1,nome:'ADMIN',permissoes:['TODAS']},{id:2,nome:'ANALISTA',permissoes:['INICIO','CHAMADOS','CHAMADOS_EDITAR','LOJAS','PRESTADORES','PROPRIETARIOS','LEMBRETES','PREVENTIVAS','ORDENS_SERVICO','IMPORTAR','RELATORIOS','PONTO_HORAS']},{id:3,nome:'CONSULTA',permissoes:['INICIO','CHAMADOS','LOJAS','PRESTADORES','PROPRIETARIOS','RELATORIOS']}],tiposServico:[...DEFAULT_SERVICOS],statusChamado:[...STATUS],lojas:[],prestadores:[],proprietarios:[],chamados:[],os:[],lembretes:[],preventivas:[],pontos:[],pagamentos:[]}}
 
-/* PATCH V20.8.18 - GRAVAÇÃO FORTE NO SUPABASE ANTES DA RESPOSTA */
+/* PATCH V20.8.19 - GRAVAÇÃO FORTE NO SUPABASE ANTES DA RESPOSTA */
 let lastFlushAt = null;
 let lastFlushError = '';
 async function forcePersistNow(reason='manual'){
@@ -288,14 +289,14 @@ async function forcePersistNow(reason='manual'){
     await saveRemoteNow(persistentCache);
     lastFlushAt = new Date().toISOString();
     lastFlushError = '';
-    console.log('V20.8.18 persistência confirmada:', reason, lastFlushAt);
+    console.log('V20.8.19 persistência confirmada:', reason, lastFlushAt);
     return {ok:true,at:lastFlushAt};
   }catch(e){
     lastFlushError = e.message || String(e);
     lastPersistError = lastFlushError;
     lastSaveOk = false;
     supabaseOk = false;
-    console.error('V20.8.18 FALHA AO CONFIRMAR SUPABASE:', lastFlushError);
+    console.error('V20.8.19 FALHA AO CONFIRMAR SUPABASE:', lastFlushError);
     return {ok:false,error:lastFlushError};
   }
 }
@@ -320,14 +321,67 @@ function installStrongSaveMiddleware(app){
   });
 }
 
+
+/* PATCH V20.8.19 - SALVAMENTO GLOBAL FORTE SEM ALTERAR LAYOUT */
+let __saveSeq = 0;
+let __lastSaveRoute = '';
+let __lastSaveKeys = [];
+function v20819_hasData(d){
+  return !!(d && (
+    (d.usuarios||[]).length>1 || (d.lojas||[]).length || (d.prestadores||[]).length ||
+    (d.chamados||[]).length || (d.os||[]).length || (d.proprietarios||[]).length ||
+    (d.lembretes||[]).length || (d.preventivas||[]).length || (d.pontos||[]).length
+  ));
+}
+function v20819_touch(d, route=''){
+  d = mergeDB(emptyDB(), d || {});
+  d.config = d.config || {};
+  d.config.__lastLocalUpdate = new Date().toISOString();
+  d.config.__lastRoute = route || __lastSaveRoute || '';
+  d.config.__saveSeq = (__saveSeq = Number(d.config.__saveSeq||__saveSeq||0)+1);
+  __lastSaveKeys = Object.keys(d).filter(k=>Array.isArray(d[k]) && d[k].length).slice(0,30);
+  return d;
+}
+async function v20819_forceSave(reason='manual'){
+  try{
+    if(!persistentCache) persistentCache = mergeDB(emptyDB(), readLocalDB());
+    persistentCache = v20819_touch(persistentCache, reason);
+    try{ fs.writeFileSync(DB_FILE, JSON.stringify(persistentCache,null,2), 'utf8'); }catch(e){ console.error('V20.8.19 erro local:', e.message||e); }
+    if(!supabasePersist){
+      lastSaveOk=false; lastPersistError='SUPABASE NÃO CONFIGURADO'; return {ok:false,error:lastPersistError};
+    }
+    await saveRemoteNow(persistentCache);
+    lastSaveOk=true; lastSaveAt=new Date().toISOString(); lastPersistError='';
+    return {ok:true,at:lastSaveAt,reason};
+  }catch(e){
+    lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e);
+    console.error('V20.8.19 ERRO SAVE FORTE:', lastPersistError);
+    return {ok:false,error:lastPersistError};
+  }
+}
+function v20819_installResponseFlush(app){
+  app.use((req,res,next)=>{
+    const method = String(req.method||'').toUpperCase();
+    if(!['POST','PUT','PATCH','DELETE'].includes(method)) return next();
+    let called=false;
+    const finish = async()=>{ if(called) return; called=true; await v20819_forceSave(`${method} ${req.originalUrl||req.url}`); };
+    const oldRedirect=res.redirect.bind(res), oldSend=res.send.bind(res), oldJson=res.json.bind(res), oldEnd=res.end.bind(res);
+    res.redirect=function(...args){ finish().finally(()=>oldRedirect(...args)); return res; };
+    res.send=function(...args){ finish().finally(()=>oldSend(...args)); return res; };
+    res.json=function(...args){ finish().finally(()=>oldJson(...args)); return res; };
+    res.end=function(...args){ finish().finally(()=>oldEnd(...args)); return res; };
+    next();
+  });
+}
+
 function load(){ if(persistentCache) return persistentCache; let d; if(!fs.existsSync(DB_FILE)){ d=emptyDB(); persistentCache=d; save(d); return d; } try{d=JSON.parse(fs.readFileSync(DB_FILE,'utf8'))}catch{d=emptyDB()} persistentCache=mergeDB(emptyDB(), d); return persistentCache }
-function save(d){ persistentCache=mergeDB(emptyDB(), d); scheduleRemoteSave(persistentCache); return true } function next(d,k){d.config.next[k]=Number(d.config.next[k]||1);return d.config.next[k]++}
+function save(d){ __lastSaveRoute='save(d)'; persistentCache=v20819_touch(d,'save(d)'); try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.8.19 erro JSON local:', e.message||e); } scheduleRemoteSave(persistentCache); return true } function next(d,k){d.config.next[k]=Number(d.config.next[k]||1);return d.config.next[k]++}
 function user(req){return req.session.user||null} function can(req,perm){const u=user(req); if(!u)return false; if(norm(u.usuario)==='OLITECH'||norm(u.perfil)==='ADMIN')return true; const d=load(); const uu=d.usuarios.find(x=>String(x.id)===String(u.id)||norm(x.usuario)===norm(u.usuario))||u; const pf=d.perfis.find(p=>norm(p.nome)===norm(uu.perfil)); const ps=[...arr(uu.permissoes),...arr(pf?.permissoes)].map(norm); return ps.includes('TODAS')||ps.includes(norm(perm))}
 function auth(req,res,nextfn){if(!user(req))return res.redirect('/login');nextfn()} function need(p){return (req,res,nextfn)=>can(req,p)?nextfn():res.status(403).send(page(req,'Sem permissão',`<div class="card"><h2>🚫 Sem permissão</h2><p>Permissão necessária: ${esc(p)}</p><a class="btn" href="/">🏠 Início</a></div>`))}
 function fileObj(f){if(!f)return null;let o={original:f.originalname,path:'uploads/'+f.filename,filename:f.filename,mimetype:f.mimetype,size:f.size,at:now()};try{if((f.mimetype||'').startsWith('image/'))o.dataUrl='data:'+f.mimetype+';base64,'+fs.readFileSync(f.path).toString('base64')}catch(e){}return o} function oneFile(req,n){return fileObj(req.files?.[n]?.[0]||req.file)} function manyFiles(req,n){return (req.files?.[n]||[]).map(fileObj).filter(Boolean)} function publicFile(f){if(!f)return ''; if(typeof f==='string')return f; if(f.dataUrl)return f.dataUrl; return '/'+String(f.path||'').replace(/^\/+|\\/g,'/')} function appLogo(d){d=d||{};d.config=d.config||{};return publicFile(d.config.logoEmpresaLocal)||publicFile(d.config.logoLocal)||d.config.logoUrl||''}
 function menu(req){const items=[['/','🏠 Início','INICIO'],['/chamados','🎫 Chamados','CHAMADOS'],['/chamados-por-analista','👤 Chamados por Analista','CHAMADOS'],['/lojas','🏬 Lojas','LOJAS'],['/prestadores','🧰 Prestadores','PRESTADORES'],['/proprietarios','👥 Proprietários','PROPRIETARIOS'],['/lembretes','📌 Lembretes','LEMBRETES'],['/preventivas','🗓️ Preventivas','PREVENTIVAS'],['/os','📄 Ordens de Serviço','ORDENS_SERVICO'],['/importar-planilha','📥 Importar','IMPORTAR'],['/relatorios','📊 Relatórios','RELATORIOS'],['/ponto-horas','⏱️ Ponto/Horas','PONTO_HORAS'],['/config','⚙️ Config','CONFIG'],['/logout','🚪 Sair','INICIO']];return `<nav>${items.filter(i=>i[0]==='/logout'||can(req,i[2])).map(i=>`<a class="btn menu-btn" href="${i[0]}">${i[1]}</a>`).join('')}</nav>`}
 
-/* PATCH V20.8.18 - assinatura digital do analista na O.S. */
+/* PATCH V20.8.19 - assinatura digital do analista na O.S. */
 function v2088_publicImg(f){
   try{
     if(!f) return '';
@@ -362,7 +416,7 @@ function v2088_injetarAssinaturaOS(html,d,analista){
   }catch(e){ return html; }
 }
 
-function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.8.18</div><script src="/public/app.js"></script>
+function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.8.19</div><script src="/public/app.js"></script>
 <script>
 (function(){
  const bar=document.querySelector('.bar,.actions,.toolbar')||document.body;
@@ -430,7 +484,7 @@ function syncPreventiva(d,p){let l=d.lembretes.find(x=>String(x.preventivaId)===
 
 app.get('/login',(req,res)=>res.send(`<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login</title><link rel="stylesheet" href="/public/style.css"></head><body class="login-body"><form class="login-card" method="post"><div class="login-logo">VB</div><h1>V&B CHAMADOS</h1><label>Usuário<input name="usuario" autocomplete="username" autofocus></label><label>Senha<input type="password" name="senha" autocomplete="current-password"></label><label class="inline"><input type="checkbox" name="lembrar" value="SIM"> Salvar usuário</label><button>Entrar</button></form><script src="/public/app.js"></script></body></html>`));
 app.post('/login',(req,res)=>{const d=load();const u=d.usuarios.find(x=>norm(x.ativo||'SIM')!=='NÃO'&&norm(x.usuario)===norm(req.body.usuario)&&String(x.senha||'')===String(req.body.senha||''));if(!u)return res.send(page(req,'Login',`<div class="login-card"><p class="alert">Usuário ou senha inválidos.</p><a class="btn" href="/login">Tentar novamente</a></div>`));req.session.user={id:u.id,nome:u.nome,usuario:u.usuario,perfil:u.perfil,permissoes:u.permissoes||[]};res.redirect('/')}); app.get('/logout',(req,res)=>req.session.destroy(()=>res.redirect('/login')));
-/* PATCH V20.8.18 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
+/* PATCH V20.8.19 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
 app.get('/',auth,(req,res)=>{
   const d=load();
   const q=norm(req.query.q||'');
@@ -445,7 +499,7 @@ app.get('/',auth,(req,res)=>{
 function postit(l){const cor=norm(l.cor||'AMARELO').toLowerCase();const href=l.chamadoId?`/chamados/${l.chamadoId}/editar`:(l.preventivaId?`/preventivas/${l.preventivaId}/editar`:`/lembretes/${l.id}/editar`);return `<a class="postit ${cor}" href="${href}"><b>${esc(l.titulo)}</b><span>📅 ${br(l.data)} ${esc(l.hora||'')}</span><small>${esc(l.descricao||'')}</small></a>`}
 
 app.get('/api/autocomplete',auth,(req,res)=>{const d=load(),tipo=norm(req.query.tipo||'GERAL'),q=norm(req.query.q||''),di=dig(req.query.q||'');if(q.length<2&&di.length<2)return res.json({ok:true,items:[]});const items=[];const add=(tipo,id,label,value,sub,raw)=>items.push({tipo,id,label,value,sub,raw});if(['LOJAS','GERAL'].includes(tipo))d.lojas.forEach(l=>add('loja',l.id,l.nome,l.nome,[l.codigo,l.cidade,l.uf,l.cnpj,l.cep].filter(Boolean).join(' | '),l));if(['PRESTADORES','GERAL'].includes(tipo))d.prestadores.forEach(p=>add('prestador',p.id,p.empresa||p.responsavel,p.empresa||p.responsavel,[p.responsavel,p.cidade,p.uf,p.cnpj,(p.servicos||[]).join(',')].filter(Boolean).join(' | '),p));if(['PROPRIETARIOS','GERAL'].includes(tipo))d.proprietarios.forEach(p=>add('proprietario',p.id,p.nome,p.nome,[p.cidade,p.uf,p.cnpj,p.cpf].filter(Boolean).join(' | '),p));if(['ANALISTAS','USUARIOS','GERAL'].includes(tipo))d.usuarios.filter(u=>norm(u.ativo)!=='NÃO').forEach(u=>add('usuario',u.id,u.nome||u.usuario,u.nome||u.usuario,[u.usuario,u.perfil].filter(Boolean).join(' | '),u));if(['CHAMADOS','GERAL'].includes(tipo))d.chamados.forEach(c=>add('chamado',c.id,`${c.numeroInterno||c.id} - ${c.lojaNome||''}`,String(c.numeroInterno||c.id),[c.prestadorNome,c.status,c.tipoServico].filter(Boolean).join(' | '),c));if(['SERVICOS','GERAL'].includes(tipo))d.tiposServico.forEach(s=>add('servico',s,s,s,'Tipo de serviço',{nome:s}));const ok=items.filter(x=>norm([x.label,x.sub,JSON.stringify(x.raw)].join(' ')).includes(q)||di&&dig([x.label,x.sub].join(' ')).includes(di)).slice(0,40);res.json({ok:true,items:ok})});
-app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.8.18'}));
+app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.8.19'}));
 
 app.get('/config',auth,need('CONFIG'),(req,res)=>{const d=load(),c=d.config;res.send(page(req,'Config',`<section class="card"><h2>⚙️ Configurações</h2><form method="post" enctype="multipart/form-data" class="form"><div class="grid4"><label>Nome sistema<input name="nomeSistema" value="${esc(c.nomeSistema)}"></label><label>Subtítulo<input name="subtitulo" value="${esc(c.subtitulo)}"></label><label>Tema<select name="tema">${['VERDE','AZUL','ESCURO','ROXO','LARANJA'].map(t=>`<option ${norm(c.tema)===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Logo URL<input name="logoUrl" value="${esc(c.logoUrl)}"></label><label>Logo local<input type="file" name="logoLocal" accept="image/*"></label>${appLogo(d)?`<label>Logo atual<div class="logo-preview"><img src="${esc(appLogo(d))}" onerror="this.style.display='none'"></div></label>`:''}<label>Logo da O.S.<select name="usarLogoLojaOS"><option value="SIM" ${c.usarLogoLojaOS!=='NAO'?'selected':''}>REUTILIZAR LOGO DA LOJA</option><option value="NAO" ${c.usarLogoLojaOS==='NAO'?'selected':''}>USAR LOGO DA EMPRESA</option></select></label><label>Filial / nomes repetidos<select name="regraNomeFilial"><option value="ORIGINAL" ${c.regraNomeFilial==='ORIGINAL'?'selected':''}>ORIGINAL</option><option value="MESCLAR_NOME_CIDADE_UF" ${c.regraNomeFilial!=='ORIGINAL'?'selected':''}>MESCLAR NOME + CIDADE + UF</option></select></label></div><button>💾 Salvar</button></form></section><section class="card"><h2>Cadastros de apoio</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a><a class="btn" href="/perfis">🔐 Perfis/Permissões</a><a class="btn" href="/backup">💾 Backup/Restauração</a><a class="btn" href="/tipos-servico">🛠️ Tipos de serviço</a><a class="btn" href="/diagnostico">🩺 Diagnóstico</a></section>`))});
 app.post('/config',auth,need('CONFIG'),upload.single('logoLocal'),(req,res)=>{const d=load();Object.assign(d.config,{nomeSistema:norm(req.body.nomeSistema||d.config.nomeSistema),subtitulo:norm(req.body.subtitulo||d.config.subtitulo),tema:norm(req.body.tema||d.config.tema),logoUrl:(req.body.logoUrl||'').trim(),regraNomeFilial:req.body.regraNomeFilial||'ORIGINAL',usarLogoLojaOS:req.body.usarLogoLojaOS||d.config.usarLogoLojaOS||'SIM'});if(req.file){const logo=fileObj(req.file);d.config.logoEmpresaLocal=logo;d.config.logoLocal=logo;}save(d);res.redirect('/config')});
@@ -457,7 +511,7 @@ app.get('/usuarios/novo',auth,need('USUARIOS'),(req,res)=>res.send(usuarioForm(r
 app.get('/perfis',auth,need('USUARIOS'),(req,res)=>{const d=load();res.send(page(req,'Perfis',`<div class="bar"><h2>🔐 Perfis/Permissões</h2><a class="btn" href="/perfis/novo">➕ Novo</a></div><div class="card">${tabela(['Perfil','Permissões','Ações'],d.perfis.map(p=>`<tr><td>${esc(p.nome)}</td><td>${esc(arr(p.permissoes).join(', '))}</td><td><a class="btn small" href="/perfis/${p.id}/editar">✏️ Editar</a></td></tr>`))}</div>`))});function perfilForm(req,p={}){return page(req,'Perfil',`<div class="bar"><h2>🔐 Perfil</h2><a class="btn secondary" href="/perfis">Voltar</a></div><form class="card form" method="post"><label>Nome<input name="nome" value="${esc(p.nome)}" required></label><div class="perm-grid">${PERMS.map(x=>`<label class="checkline"><input type="checkbox" name="permissoes" value="${x}" ${arr(p.permissoes).map(norm).includes(x)?'checked':''}> ${x.replaceAll('_',' ')}</label>`).join('')}</div><button>💾 Salvar</button></form>`)}app.get('/perfis/novo',auth,need('USUARIOS'),(req,res)=>res.send(perfilForm(req)));app.get('/perfis/:id/editar',auth,need('USUARIOS'),(req,res)=>res.send(perfilForm(req,load().perfis.find(p=>String(p.id)===String(req.params.id))||{})));app.post(['/perfis/novo','/perfis/:id/editar'],auth,need('USUARIOS'),(req,res)=>{const d=load();let p=req.params.id?d.perfis.find(x=>String(x.id)===String(req.params.id)):null;if(!p){p={id:next(d,'perfil')};d.perfis.push(p)}p.nome=norm(req.body.nome);p.permissoes=arr(req.body.permissoes).map(norm);save(d);res.redirect('/perfis')});
 
 
-/* PATCH V20.8.18 - preserva nome da loja exatamente como exibido no formulário ao SALVAR */
+/* PATCH V20.8.19 - preserva nome da loja exatamente como exibido no formulário ao SALVAR */
 function v20813_cleanLojaNomeSave(req){
   const body = req.body || {};
   const nomeCampo = body.nome || body.nomeLoja || body.lojaNome || body.loja || '';
@@ -476,7 +530,7 @@ function v20813_aplicarNomeLojaTratado(req, loja){
 }
 
 
-/* PATCH V20.8.18 - nome da loja importada por PDF preservado no salvar */
+/* PATCH V20.8.19 - nome da loja importada por PDF preservado no salvar */
 function v20814_nomeLojaFinal(req,l){
   const b=req.body||{};
   let nome=String(b.nome||b.nomeTratadoPdf||b.nomeLoja||b.lojaNome||'').trim().toUpperCase().replace(/\s+/g,' ');
@@ -512,7 +566,7 @@ app.get('/chamados',auth,need('CHAMADOS'),(req,res)=>{const d=load(),q=norm(req.
 /* V16.1 - impressão de O.S. no padrão enviado pelo usuário */
 function osLogoEscolhido(d,loja){if((d.config.usarLogoLojaOS||'SIM')!=='NAO')return publicFile(loja.logoLocal)||loja.logoUrl||appLogo(d);return appLogo(d)||publicFile(loja.logoLocal)||loja.logoUrl}
 
-/* ================= PATCH V20.8.18 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
+/* ================= PATCH V20.8.19 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
 function os83State(){ return load(); }
 function os83Closed(c){ return finalizado(c.status) || finalizado(c.statusOs); }
 function os83Num(c){ return c.numeroInterno || c.numeroExterno || c.numero || c.id || ''; }
@@ -589,7 +643,7 @@ app.post('/os/:id/fechar',auth,need('ORDENS_SERVICO'),async(req,res)=>{
 });
 
 
-/* PATCH V20.8.18 - PDF DA O.S. PARA DOWNLOAD/COMPARTILHAMENTO */
+/* PATCH V20.8.19 - PDF DA O.S. PARA DOWNLOAD/COMPARTILHAMENTO */
 function os83PdfBuffer(req,res,d,os,ch){
   const first=ch[0]||{}; const loja=os83Loja(d,first,os); const prest=os83Prestador(d,first,os);
   const numeros=ch.map(c=>os83Num(c)).filter(Boolean).join(', ') || os.numero || os.numeroOs || os.id;
@@ -666,7 +720,7 @@ app.get('/os-impressao/:id',auth,need('ORDENS_SERVICO'),(req,res)=>{
 });
 
 
-/* PATCH V20.8.18 - O.S. PDF/WHATSAPP/VALOR */
+/* PATCH V20.8.19 - O.S. PDF/WHATSAPP/VALOR */
 function v20814_showValor(req){
   const v=String(req.query.valor||'1').toUpperCase();
   return !(v==='0'||v==='SEM'||v==='NAO'||v==='NÃO');
@@ -790,7 +844,7 @@ function v158_excelDate(v){
 }
 function v158_clone(v){return JSON.parse(JSON.stringify(v??null))}
 function v158_atomicSave(d){
-  // PATCH V20.8.18: importação precisa salvar pela função oficial save(),
+  // PATCH V20.8.19: importação precisa salvar pela função oficial save(),
   // pois ela atualiza cache em memória e envia para Supabase.
   try{
     if(typeof save === 'function'){
@@ -798,7 +852,7 @@ function v158_atomicSave(d){
       return true;
     }
   }catch(e){
-    console.error('V20.8.18 erro save importação:', e.message || e);
+    console.error('V20.8.19 erro save importação:', e.message || e);
   }
   const tmp=DB_FILE+'.tmp';
   fs.writeFileSync(tmp, JSON.stringify(d,null,2),'utf8');
@@ -819,7 +873,7 @@ function v158_headerIndex(headers, names){
   return -1;
 }
 
-/* PATCH V20.8.18 - importação VestCasa sem alterar layout */
+/* PATCH V20.8.19 - importação VestCasa sem alterar layout */
 function v20810_key(v){return v158_norm(v).replace(/\b(LTDA|ME|EPP|EIRELI|S A|SA|SERVICOS|SERVIÇOS|COMERCIO|COMÉRCIO)\b/g,'').replace(/[^A-Z0-9]+/g,' ').trim();}
 function v20810_tel(v){return v158_dig(v).slice(-11);}
 function v20810_isData(v){return !!v158_excelDate(v);}
@@ -868,7 +922,7 @@ function v158_findOrCreatePrestador(d, nome, telefone, tipo){
   return {prestador:p,criada};
 }
 function v158_buildRows(filePath){
-  // PATCH V20.8.18: leitura leve para não derrubar Render/502.
+  // PATCH V20.8.19: leitura leve para não derrubar Render/502.
   // Mantém a estrutura V20.8 e evita cellStyles, que consome muita memória.
   const wb=XLSX.readFile(filePath,{cellDates:true,cellStyles:false,cellNF:false,bookVBA:false,dense:false});
   const ws=wb.Sheets['CHAMADOS']||wb.Sheets[wb.SheetNames[0]];
@@ -951,7 +1005,7 @@ function v158_importCore(req, file){
   return {importados,lojasCriadas,prestCriados,ignoradas,duplicados};
 }
 
-/* PATCH V20.8.18 - IMPORTAÇÃO ASSÍNCRONA COM LOADING */
+/* PATCH V20.8.19 - IMPORTAÇÃO ASSÍNCRONA COM LOADING */
 const v20811ImportJobs = new Map();
 function v20811JobPage(req, jobId){
   return v158_safePage(req,'Importando planilha',`<div class="bar"><h2>📥 Importando planilha</h2><a class="btn secondary" href="/importar-planilha">Voltar</a></div><div class="card"><h2>⏳ Processando... aguarde</h2><p>O arquivo foi recebido e está sendo importado em segundo plano.</p><p>Não feche esta tela até concluir.</p><div class="progress-wrap"><div class="progress-bar" id="importProgress"></div></div><p id="importStatus">Iniciando importação...</p></div><script>
@@ -1013,12 +1067,12 @@ function v158_handleImport(req,res){
         v20811ImportJobs.set(jobId,{status:'done',msg:'Importação concluída.',result:r,createdAt:j.createdAt||Date.now(),finishedAt:Date.now()});
         try{fs.unlinkSync(req.file.path)}catch(_e){}
       }catch(e){
-        console.error('ERRO IMPORTAÇÃO V20.8.18', e);
+        console.error('ERRO IMPORTAÇÃO V20.8.19', e);
         v20811ImportJobs.set(jobId,{status:'error',msg:'Erro ao importar.',error:e.message||String(e),createdAt:Date.now(),finishedAt:Date.now()});
       }
     });
   }catch(e){
-    console.error('ERRO IMPORTAÇÃO V20.8.18', e);
+    console.error('ERRO IMPORTAÇÃO V20.8.19', e);
     return res.status(200).send(v158_importPage(req,`<h3>⚠️ Erro ao importar</h3><p>${esc(e.message||String(e))}</p><p>Nada foi salvo. O backup anterior foi preservado.</p>`));
   }
 }
@@ -1991,12 +2045,12 @@ app.get("/chamados/:id/os", auth, (req,res)=>res.redirect(`/os/${req.params.id}/
 
 app.get('/api/v2084/status', auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,versao:'V20.8.18',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
+  res.json({ok:true,versao:'V20.8.19',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
 });
 
 
 
-/* PATCH V20.8.18 - diagnóstico de importação/persistência */
+/* PATCH V20.8.19 - diagnóstico de importação/persistência */
 app.get('/api/v2087/status', auth, async (req,res)=>{
   try{
     const local = load();
@@ -2010,7 +2064,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
     }
     res.json({
       ok:true,
-      versao:'20.8.18',
+      versao:'20.8.19',
       supabaseConfigurado: !!(typeof supabasePersist !== 'undefined' && supabasePersist),
       erroRemoto,
       local:{
@@ -2033,7 +2087,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.8.18 - rotas WhatsApp e PDF da O.S. */
+/* PATCH V20.8.19 - rotas WhatsApp e PDF da O.S. */
 app.get('/os-pdf/:id', auth, (req,res)=>{
   try{
     const d=load(), info=v20814_osData(d,req.params.id), show=v20814_showValor(req);
@@ -2073,7 +2127,7 @@ app.get('/os-whatsapp-prestador/:id', auth, (req,res)=>{
 });
 
 
-/* PATCH V20.8.18 - rotas O.S. PDF e WhatsApp fixas */
+/* PATCH V20.8.19 - rotas O.S. PDF e WhatsApp fixas */
 app.get('/os-whatsapp-loja/:id',auth,(req,res)=>{
  const d=load(),i=v20816_osInfo(d,req.params.id),show=v20816_showValor(req);
  const tel=i.loja.whatsappResponsavel||i.loja.whatsapp||i.loja.telefoneResponsavel||i.loja.telefone;
@@ -2119,7 +2173,7 @@ app.get('/os-pdf/:id',auth,(req,res)=>{
 });
 
 
-/* PATCH V20.8.18 - abrir anexos salvos da loja */
+/* PATCH V20.8.19 - abrir anexos salvos da loja */
 app.get('/lojas/:id/cartao-cnpj', auth, (req,res)=>{
   const d=load(); const l=(d.lojas||[]).find(x=>String(x.id)===String(req.params.id));
   const f=l?.cartaoCnpj; const data=f?.dataUrl||f?.data;
@@ -2142,7 +2196,7 @@ app.get('/lojas/:id/foto/:idx', auth, (req,res)=>{
 });
 
 
-/* PATCH V20.8.18 - STATUS/TESTE DE PERSISTÊNCIA */
+/* PATCH V20.8.19 - STATUS/TESTE DE PERSISTÊNCIA */
 app.get('/api/persist/status', auth, (req,res)=>{
   const d=load();
   res.json({
@@ -2171,12 +2225,47 @@ app.post('/api/persist/flush', auth, async (req,res)=>{
   res.json(r);
 });
 
+
+/* PATCH V20.8.19 - DIAGNÓSTICO DE SALVAMENTO */
+app.get('/api/save/status', auth, (req,res)=>{
+  const d=load();
+  res.json({
+    versao:'V20.8.19',
+    supabaseConfigurado:!!supabasePersist,
+    supabaseOk,
+    remoteLoaded,
+    lastSaveOk,
+    lastSaveAt,
+    lastPersistError,
+    stateId:SUPABASE_STATE_ID,
+    saveSeq:d.config?.__saveSeq||0,
+    lastRoute:d.config?.__lastRoute||'',
+    lastLocalUpdate:d.config?.__lastLocalUpdate||'',
+    arraysComDados:__lastSaveKeys,
+    totais:{
+      usuarios:(d.usuarios||[]).length,
+      perfis:(d.perfis||[]).length,
+      lojas:(d.lojas||[]).length,
+      prestadores:(d.prestadores||[]).length,
+      proprietarios:(d.proprietarios||[]).length,
+      chamados:(d.chamados||[]).length,
+      os:(d.os||[]).length,
+      lembretes:(d.lembretes||[]).length,
+      preventivas:(d.preventivas||[]).length,
+      pontos:(d.pontos||[]).length
+    }
+  });
+});
+app.post('/api/save/flush', auth, async (req,res)=>{
+  res.json(await v20819_forceSave('flush manual'));
+});
+
 app.use((req,res)=>res.status(404).send(page(req,'Página não encontrada',`<div class="card"><h2>❌ Página não encontrada</h2><p>A rota ${esc(req.path)} não foi localizada.</p><a class="btn" href="/">🏠 Início</a></div>`)));
 app.use((err,req,res,nextfn)=>res.status(500).send(errorPage(req,err)));
 
 app.get(['/api/v2085/status','/api/persist-status'], auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,version:'V20.8.18',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
+  res.json({ok:true,version:'V20.8.19',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
 });
 app.post('/api/v2085/force-save', auth, async (req,res)=>{
   try{ await saveRemoteNow(load()); res.json({ok:true,lastSaveAt,erro:''}); }
@@ -2184,4 +2273,4 @@ app.post('/api/v2085/force-save', auth, async (req,res)=>{
 });
 
 await initPersistentDB();
-app.listen(PORT,()=>console.log('V&B Chamados V20.8.18 rodando na porta '+PORT));
+app.listen(PORT,()=>console.log('V&B Chamados V20.8.19 rodando na porta '+PORT));
