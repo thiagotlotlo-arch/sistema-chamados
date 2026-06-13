@@ -199,3 +199,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - O nome exibido no formulário agora é preservado exatamente ao salvar.
 - Removido tratamento amplo que podia reprocessar nome em rotas /lojas.
 - Demais funções mantidas.
+
+## V20.8.14
+- Corrige nome da loja ao salvar após importar PDF.
+- Adiciona O.S. COM VALOR / SEM VALOR.
+- WhatsApp loja e prestador com link direto para PDF gerado em /os-pdf/:id.
+- PDF da O.S. soma valores quando houver junção.
+- Mantida estrutura/layout V20.8.
