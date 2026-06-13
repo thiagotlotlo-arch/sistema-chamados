@@ -213,3 +213,12 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Valor com máscara R$.
 - O.S.: botões fixos com valor/sem valor, baixar PDF e WhatsApp loja/prestador.
 - PDF da O.S. com dados principais e total em junção.
+
+## V20.8.16 - consolidado base V20.8
+- Marcador de versão corrigido em server.js, package.json, public/app.js e CSS.
+- Chamado rápido simples.
+- Cadastro de loja preserva nome editado/importado e inclui domingo abre/fecha.
+- CEP automático básico por cidade/UF quando PDF não traz CEP.
+- Máscara de valor em R$.
+- O.S. com botões fixos: com valor, sem valor, baixar PDF, WhatsApp loja e prestador.
+- PDF de O.S. com dados principais e total somado em junção.
