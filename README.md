@@ -1,260 +1,88 @@
-# V&B Chamados V14.0 Estável
+# VB Chamados V20.5 Recuperado
 
-Sistema reconstruído para reduzir erros e manter as funções pedidas: usuários/permissões, lojas, prestadores, proprietários, chamados, logística, O.S., lembretes, preventivas, ponto/horas, relatórios, importação, PDF, backup e temas.
+Versão consolidada a partir do histórico do projeto.
 
 ## Login padrão
-Usuário: OLITECH
-Senha: 051309
+- Usuário: `OLITECH`
+- Senha: `051309`
 
-## Instalação Render
-1. Apague os arquivos antigos do GitHub.
-2. Envie todos os arquivos deste ZIP.
-3. Render > Clear build cache & deploy.
-4. Build Command: npm install
-5. Start Command: npm start
-6. Acesse /diagnostico após login.
-
-## Banco
-Por padrão usa data/db.json. O arquivo é criado automaticamente.
-
-## Outra empresa
-Suba este mesmo pacote em outro repositório/Render. Entre com OLITECH/051309, altere Config, logo, usuários e permissões.
-
-
-## V14.1
-- Impressão de O.S. ajustada conforme modelos enviados: cabeçalho, dados do requerente, descrição por chamados, prestador, termo e assinaturas em uma folha A4.
-- O.S. pode reutilizar logo da loja ou logo da empresa pela Config.
-- Logo local passa a ser salvo também em base64 no banco para não sumir após deploy do Render.
-- Cadastro da loja ganhou WhatsApp do responsável.
-- PDF de prestador reforçado para nome, endereço, CEP, telefone, cidade e UF.
-- PDF de loja com regra de filial reforçada: MEGA VEST CASA LTDA -> MEGA VEST CASA CIDADE UF.
-- Combo/autocomplete global reforçado a partir de 2 caracteres.
-
-
-## V14.2
-Correções diretas:
-- Importação de planilha corrigida para não retornar 0 quando a planilha possui colunas com nomes diferentes.
-- Cadastro de loja: upload de PDF corrigido para não sumir o anexo ao clicar em Pesquisar PDF.
-- Cadastro de prestador: upload de PDF corrigido e busca reforçada de nome, CNPJ, CEP, telefone, cidade, UF e endereço.
-- Formulários de PDF e planilha apontam para rotas V14.2 robustas.
-
-
-## V14.3
-- Loja: PDF usa a lógica do prestador, mas aplica regra de filial com cidade + UF.
-- Prestador: PDF mantém nome original/limpo sem mesclar cidade.
-- CEP reforçado em loja, prestador e importação.
-- Importação de planilha ampliada para aceitar mais nomes de colunas.
-
-
-## V14.4
-Correção de deploy Render:
-- Removidas rotas com `:id?`, que estavam causando falha na inicialização.
-- Criadas rotas separadas e seguras:
-  - /v144/loja-pdf
-  - /v144/loja-pdf/:id
-  - /v144/prestador-pdf
-  - /v144/prestador-pdf/:id
-
-
-## V14.5
-Correção de deploy Render:
-- Corrigido `ReferenceError: requirePerm is not defined`.
-- Removidas rotas antigas desativadas que ainda executavam validação.
-- Adicionado `v145Require`, verificação de permissão compatível com a base atual.
-
-
-## V14.6
-Correção do erro de rota /v144 nos cadastros por PDF. Formulários agora usam /v146.
-
-
-## V15.0 Estável
-- Removidos patches de rotas /v142, /v143, /v144 e /v146 que causavam erro na importação PDF.
-- PDF voltou a usar as rotas nativas de loja e prestador.
-- Importação de planilha reforçada em /v15/importar-planilha.
-- Diagnóstico em /diagnostico.
-- Versão única V15.0.
-
-
-## V15.1
-- Importação de PDF reforçada para loja e prestador.
-- CEP, cidade e UF reforçados na leitura.
-- Regra de filial mantida: NOME + CIDADE + UF.
-- Cidades e UF voltaram como combobox/autocomplete.
-- Rotas PDF novas:
-  - /v151/loja-pdf
-  - /v151/loja-pdf/:id
-  - /v151/prestador-pdf
-  - /v151/prestador-pdf/:id
-
-## V15.2
-- Corrige PDF deixando Nome loja e CEP vazios.
-- Fallback para MEGA VEST CASA quando o PDF contém CNPJ/razão social da rede.
-- Mantém CEP já existente caso o PDF não informe.
-- Rota loja PDF: /v152/loja-pdf.
-
-## V15.3
-Importação PDF reestruturada no estilo da V11, corrigindo `db is not defined` e usando rotas /v153.
-
-## V15.4
-- Config `Filial / nomes repetidos` agora grava nas duas chaves: regraNomeFilial e filialNomesRepetidos.
-- PDF de loja usa /v154/loja-pdf.
-- Se marcado MESCLAR, gera NOME + CIDADE + UF.
-- Reforço para nome/CEP/cidade/UF.
-
-## V15.5
-- Importação de planilha segura: não apaga usuários/analistas e cria backup automático.
-- Autocomplete de analista a partir de 2 caracteres.
-
-## V15.6
-- Importação blindada: preserva usuários, analistas, perfis e permissões.
-- Backup automático antes da importação.
-- Nova rota /v156/importar-planilha.
-
-
-## V15.7
-- Importação de planilha reescrita e colocada antes das rotas antigas, para evitar cair em /v155 ou /v156 quebradas.
-- As rotas /importar-planilha, /v15/importar-planilha, /v155/importar-planilha, /v156/importar-planilha e /v157/importar-planilha usam o mesmo handler seguro.
-- Protege usuários e perfis antes/depois da importação, com backup automático.
-- Autocomplete de analista a partir de 2 caracteres.
-
-## V15.8
-- Importação de planilha refeita usando a lógica antiga estável da V12.
-- Rotas /importar-planilha, /v15, /v155, /v156, /v157 e /v158 apontam para o mesmo importador protegido.
-- Erros de importação retornam página tratada 200, não derrubam o Render.
-- Usuários/perfis/permissões são preservados.
-
-## V15.9
-- Mantém importação de planilha da V15.8.
-- Restaura/fortalece PDF de loja com regra MEGA VEST CASA + CIDADE + UF.
-- Botão Gerar localização volta a abrir Google Maps por endereço/cidade/UF ou lat/long.
-
-## V16.0
-- Chamado rápido separado: loja, descrição e anexos.
-- Chamado completo separado para analista/admin com atribuição, prestador e logística.
-
-## V16.1
-- Grid padrão só com chamados abertos.
-- Finalizados/cancelados aparecem apenas por busca/filtro.
-- Fechamento em massa de chamados selecionados.
-- OS com WhatsApp do responsável da loja e do prestador.
-
-## V20.8.2
-- Tudo em maiúsculo automaticamente ao digitar e no login.
-- Melhorias de visual mobile.
-- Grid inicial não carrega chamados por padrão; só após busca ou Mostrar todos para poupar memória.
-- Mantidas as funções existentes.
-
-## V20.8.3
-- Restaurada tela de O.S. agrupada por loja/prestador com sugestão de junção.
-- Botão selecionar todos da loja/prestador.
-- Impressão mantém layout atual e volta a exibir assinatura digital do analista/usuário.
-- Botão WhatsApp responsável da loja na O.S. e WhatsApp prestador.
-- Fechar O.S. fecha chamados vinculados.
-
-
-## V20.8.4 - Correção Supabase
-Esta versão corrige a persistência: o sistema passa a carregar e salvar os dados na tabela `public.app_state` do Supabase quando as variáveis abaixo estiverem configuradas no Render:
-
+## Supabase
+Use o arquivo `schema.sql` no SQL Editor do Supabase.
+Configure no Render:
 - `SUPABASE_URL`
-- `SUPABASE_SERVICE_ROLE_KEY`  (recomendado; não usar anon em produção para salvar)
-- `SUPABASE_STATE_ID=default` opcional
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `SUPABASE_STATE_ID=default`
+- `SESSION_SECRET`
+- `NODE_VERSION=20.18.1`
 
-Antes de subir, rode o `schema.sql` no Supabase SQL Editor.
-Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfigurado:true` e `supabaseOk:true`.
+## Diagnóstico
+Depois de publicar, acesse:
+- `/api/v205/status`
+- `/diagnostico`
 
-
-## V20.8.6
-- Correção exclusiva para Render Node.js 20 + Supabase: adicionada dependência ws e transporte realtime.
-- Mantidas as funções da V20.8.5 sem alterações.
-
-## V20.8.7
-- Correção pontual da importação de planilha.
-- A importação agora salva usando a função oficial `save()`, atualizando cache em memória e Supabase.
-- Corrige caso em que a tela dizia que importou, mas as buscas vinham zeradas.
-- Adicionado diagnóstico: `/api/v2087/status`.
-
-## V20.8.8
-- Correção da conversão de valores importados: R$800,00 agora salva como 800.00.
-- Ajuste para buscar assinatura digital cadastrada no usuário/analista e exibir na impressão da O.S.
-
-
-## V20.8.10 - Base V20.8 preservada
-- Mantida a estrutura/layout da V20.8.8.
-- Corrigida apenas a importação de planilha VestCasa.
-- Deduplicação por número do chamado + loja, prestador por telefone sem máscara/nome.
-- Importa data abertura, autorizado/aprovado, descrição, agendado, pagamento/financeiro, prestador, telefone e valor.
-- Linha verde da planilha entra como FINALIZADO.
-- Logo da empresa e assinatura do analista salvas separadas em dataUrl no Supabase/estado.
+## Incluído
+- Botão Sobre.
+- Supabase app_state.
+- Lembretes com post-it, hora e bipe pelo front-end.
+- Preventivas vinculadas a lembretes.
+- O.S. agrupada por loja/prestador com impressão e fechamento.
+- Logos por loja e reutilização.
+- Assinatura digital de usuário na O.S.
+- Importação PDF para loja/prestador/proprietário.
+- Regra MEGA VEST CASA + CIDADE + UF.
+- Temas de cores.
+- Ponto automático com múltiplos plantões e edição.
 
 
-## V20.8.11
-- Corrigida somente a importação da planilha para evitar erro 502/travamento.
-- Importação agora abre tela de loading e processa em segundo plano.
-- Leitura da planilha ficou mais leve para Render.
-- Mantida a estrutura/layout da V20.8 e demais funções sem alteração.
+## V20.7.0
+- Consultas de lojas, prestadores e chamados com botão Mostrar todos.
+- Lojas por Analista com filtro por analista/TODOS e impressão.
+- Config sem WhatsApp suporte.
+- Importação PDF/cartão CNPJ restaurada para nova/editar loja, prestador e proprietário.
+- Regra loja: Mega Vest Casa + Cidade - UF.
 
+## V20.7.1
+Correção forçada: versão na tela, consultas com Mostrar Todos, Lojas por Analista, PDF CNPJ, Config sem WhatsApp suporte.
 
-## V20.8.13
-- Corrigido somente salvamento do nome da loja após importar PDF/cartão CNPJ.
-- O nome exibido no formulário agora é preservado exatamente ao salvar.
-- Removido tratamento amplo que podia reprocessar nome em rotas /lojas.
-- Demais funções mantidas.
+## V20.7.2
+- Corrige travamento de loading após login.
+- Loading fica restrito a importação/PDF/backup/restauração.
+- Adicionado endpoint /api/v2072/status.
 
-## V20.8.14
-- Corrige nome da loja ao salvar após importar PDF.
-- Adiciona O.S. COM VALOR / SEM VALOR.
-- WhatsApp loja e prestador com link direto para PDF gerado em /os-pdf/:id.
-- PDF da O.S. soma valores quando houver junção.
-- Mantida estrutura/layout V20.8.
+## V20.7.3
+- Corrigida tela Nova/Editar Loja com Analista responsável, Proprietário cadastrado, PDF CNPJ e reutilizar logo.
 
-## V20.8.15
-- Chamado rápido simplificado.
-- Loja: domingo abre/fecha, nome editado/importado e CEP por cidade/UF.
-- Valor com máscara R$.
-- O.S.: botões fixos com valor/sem valor, baixar PDF e WhatsApp loja/prestador.
-- PDF da O.S. com dados principais e total em junção.
+## V20.7.4
+- Tela de cadastro/edição de loja refeita e organizada.
+- Blocos: PDF, dados principais, endereço, vínculos, logo, horários e logística.
+- Analista responsável e proprietário cadastrado.
 
-## V20.8.16 - consolidado base V20.8
-- Marcador de versão corrigido em server.js, package.json, public/app.js e CSS.
-- Chamado rápido simples.
-- Cadastro de loja preserva nome editado/importado e inclui domingo abre/fecha.
-- CEP automático básico por cidade/UF quando PDF não traz CEP.
-- Máscara de valor em R$.
-- O.S. com botões fixos: com valor, sem valor, baixar PDF, WhatsApp loja e prestador.
-- PDF de O.S. com dados principais e total somado em junção.
+## V20.7.5
+- Corrigida importação da planilha CHAMADOS.
+- Leitura por colunas horizontais: A Loja, B Número, C Data, D Prioridade, E Autorizado, G Descrição, H Data Conversa, I Agendado, J Prestador, K Telefone, L Valor, M Pagamento, N Fechamento.
+- Ignora linhas mescladas/títulos de loja sem número válido na coluna B.
+- Cria/vincula loja e prestador automaticamente.
 
-## V20.8.17 - correção cadastro de lojas
-- Corrigido salvamento do nome editado/importado da loja.
-- UF normalizada para sigla quando vier como nome do estado.
-- Adicionados/garantidos horários de domingo/feriado abre e fecha.
-- Cartão CNPJ e fotos da loja salvos em dataUrl no banco e com botão para abrir depois.
-- Opção de reutilizar logo da empresa ou de loja já cadastrada.
-- Mantida base/layout V20.8.
+## V20.8.0
+- O.S. com junção de chamados da mesma loja/prestador.
+- Botão selecionar todos da loja/prestador.
+- Ao fechar O.S., fecha automaticamente todos os chamados vinculados.
+- Chamados fechados saem da grid padrão, mas continuam pesquisáveis por status/número.
+- O.S. de junção sempre traz todos os chamados vinculados.
+- Se fechar sem descrição/prestador/valor, pede motivo: cancelamento, fechar sem valor etc.
+- Consulta de chamados com Abrir, Editar, Finalizar, Excluir e Gerar O.S.
 
-## V20.8.18 - correção urgente de salvamento Supabase
-- Toda operação POST/PUT/PATCH/DELETE agora força gravação no Supabase antes de responder/redirect.
-- Mantém backup local JSON, mas a fonte principal continua `public.app_state`.
-- Adicionado `/api/persist/status` para conferir se está salvando no banco.
-- Adicionado `/api/persist/flush` para forçar salvamento manual.
-- Incluído `schema.sql` seguro para tabela `app_state`.
+## V20.8.1
+- Ajustado somente o layout de impressão da O.S.
+- Modelo VestCasa em A4.
+- Inclui logo da loja.
+- Inclui assinatura digital do analista/usuário quando cadastrada.
+- Mantida impressão com/sem valor.
 
-## V20.8.19 - correção geral de salvamento
-- Corrigido salvamento global sem alterar estrutura/layout.
-- Toda rota de cadastro/edição POST/PUT/PATCH/DELETE força persistência antes de responder.
-- Rotas POST que carregavam banco e não chamavam save(d) receberam save automático.
-- Diagnóstico: /api/save/status
-- Flush manual: POST /api/save/flush
-- schema.sql atualizado para app_state.
-
-## V20.8.20
-- Corrigido erro `l is not defined` ao editar prestador.
-- Adicionado botão visual "Editar campos" em telas de edição.
-- Campos ficam bloqueados até clicar em editar; em novo cadastro já ficam liberados.
-- Reforço de salvamento em rotas de cadastro/edição.
-- Adicionado relatório de horas em `/ponto-horas/relatorio` com opção imprimir.
-- `/api/save/flush` também aceita GET para testar pelo navegador.
-
-## V20.8.21
-- Corrige erro 502 no login: POST /login não força gravação no Supabase.
-- Cadastros/edições continuam salvando em background após a resposta.
-- Status: /api/save/status2.
+## V20.8.22
+- Corrigido salvamento real do nome da loja nas rotas ativas V20.8.1.
+- Botão Editar campos adicionado por script em telas de edição; novos cadastros ficam liberados.
+- Cartão CNPJ/fotos/logo da loja salvos em dataUrl dentro do app_state.
+- Rotas para abrir anexos da loja.
+- /api/save/status explica que os dados ficam em app_state.data JSONB, não nas tabelas separadas.
+- /api/save/flush força gravação no Supabase.
