@@ -222,3 +222,11 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Máscara de valor em R$.
 - O.S. com botões fixos: com valor, sem valor, baixar PDF, WhatsApp loja e prestador.
 - PDF de O.S. com dados principais e total somado em junção.
+
+## V20.8.17 - correção cadastro de lojas
+- Corrigido salvamento do nome editado/importado da loja.
+- UF normalizada para sigla quando vier como nome do estado.
+- Adicionados/garantidos horários de domingo/feriado abre e fecha.
+- Cartão CNPJ e fotos da loja salvos em dataUrl no banco e com botão para abrir depois.
+- Opção de reutilizar logo da empresa ou de loja já cadastrada.
+- Mantida base/layout V20.8.
