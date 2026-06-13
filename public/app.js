@@ -267,3 +267,21 @@ document.addEventListener("DOMContentLoaded",()=>{
     document.querySelectorAll('.version,.badge-version').forEach(e=>e.textContent='V20.8.11');
   });
 })();
+
+/* PATCH V20.8.12 - COMPARTILHAR PDF DA O.S. */
+async function compartilharOsPdf(id,tel,msg){
+  const url='/os-pdf/'+encodeURIComponent(id);
+  try{
+    const r=await fetch(url,{credentials:'same-origin'});
+    if(!r.ok) throw new Error('PDF NÃO GERADO');
+    const blob=await r.blob();
+    const file=new File([blob], 'OS-'+String(id).replace(/[^0-9A-Z-]/gi,'_')+'.pdf', {type:'application/pdf'});
+    if(navigator.canShare && navigator.canShare({files:[file]})){
+      await navigator.share({title:msg||'ORDEM DE SERVIÇO', text:msg||'ORDEM DE SERVIÇO', files:[file]});
+      return;
+    }
+  }catch(e){ console.warn(e); }
+  const full=location.origin+url;
+  const texto=(msg||'ORDEM DE SERVIÇO')+' - PDF: '+full;
+  window.open('https://wa.me/55'+String(tel||'').replace(/\D/g,'')+'?text='+encodeURIComponent(texto),'_blank');
+}

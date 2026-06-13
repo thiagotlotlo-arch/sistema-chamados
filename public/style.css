@@ -138,3 +138,7 @@ body,button,input,select,textarea,label,span,p,a,td,th,h1,h2,h3,h4,h5,h6{
 .import-box{background:#fff;padding:25px;border-radius:16px;font-size:22px;font-weight:700;text-align:center;box-shadow:0 10px 35px #0005}
 .progress-wrap{height:16px;background:#dbe4ee;border-radius:20px;overflow:hidden;margin:15px 0}
 .progress-bar{height:100%;width:20%;background:#16a34a;transition:width .4s}
+
+/* PATCH V20.8.12 ASSINATURA OS */
+.assinatura-digital-os,.assinatura-digital{max-width:150px!important;max-height:55px!important;object-fit:contain!important;display:block!important;margin:2px auto!important}
+@media print{.assinatura-digital-os,.assinatura-digital{max-width:140px!important;max-height:48px!important}}
