@@ -178,45 +178,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Ajuste para buscar assinatura digital cadastrada no usuário/analista e exibir na impressão da O.S.
 
 
-## V20.9.3 - VestCasa estabilizado
-- Mantida a base VestCasa/V&B Chamados.
-- Supabase app_state protegido contra banco incompleto.
-- Corrigido WebSocket do Supabase em Node 20.
-- Corrigido erro CLOSED IS NOT DEFINED.
-- Importação salva no cache/Supabase.
-- Valores BR corrigidos: R$ 800,00 = 800.00.
-- O.S. agrupada por loja/prestador com junção.
-- Fechar O.S. fecha chamados vinculados.
-- Impressão de O.S. modelo VestCasa com logo da loja, WhatsApp e assinatura digital do analista.
-- Textos/digitação em maiúsculas e mobile compacto.
-- Inclui schema.sql e reset_banco_mantendo_config.sql.
-
-
-## V20.9.3
-- Botão WhatsApp responsável da loja restaurado na impressão da O.S.
-- Botões WhatsApp enviam mensagem com link da O.S. para baixar/imprimir como PDF.
-- Melhor busca de telefone/WhatsApp da loja e do prestador em vários campos.
-- Removida duplicidade de valores na impressão da O.S.
-- Mantido layout da tela e impressão da O.S.
-
-
-## V20.9.3 - Logos e assinaturas persistentes
-- Logos locais e assinatura digital agora são gravados como dataUrl dentro do app_state/Supabase.
-- Corrige perda após reiniciar o Render.
-- Diagnóstico: /api/v2093/status.
-- Ação manual: POST /api/v2093/hidratar-imagens.
-
-
-## V20.9.7
-- Base retornada para V20.9.3 estável para preservar layouts e funções.
-- Corrigida somente a importação de planilha VestCasa.
-- Importa loja, número, data abertura, autorizado/aprovado, descrição, agendado, prestador, telefone, valor e pagamento/financeiro.
-- Linha verde fica FINALIZADO quando o XLSX disponibiliza a cor.
-- Linhas mescladas/somente loja são ignoradas como chamado e usadas como loja corrente.
-- Deduplicação por número do chamado + loja, telefone sem máscara e nome normalizado.
-
-## V20.9.8
-- Corrigido salvamento persistente da assinatura digital do usuário/analista no Supabase.
-- Assinatura é gravada como dataUrl no app_state e não depende da pasta temporária uploads do Render.
-- Adicionada prévia da assinatura atual na tela de edição do usuário.
-- Demais funções mantidas sem alteração.
+## V20.8.10 - Base V20.8 preservada
+- Mantida a estrutura/layout da V20.8.8.
+- Corrigida apenas a importação de planilha VestCasa.
+- Deduplicação por número do chamado + loja, prestador por telefone sem máscara/nome.
+- Importa data abertura, autorizado/aprovado, descrição, agendado, pagamento/financeiro, prestador, telefone e valor.
+- Linha verde da planilha entra como FINALIZADO.
+- Logo da empresa e assinatura do analista salvas separadas em dataUrl no Supabase/estado.

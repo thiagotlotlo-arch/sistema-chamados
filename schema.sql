@@ -1,48 +1,43 @@
--- SCHEMA V20.9.3 - SISTEMA VESTCASA / V&B CHAMADOS
+-- V&B Chamados V14.0 - schema opcional PostgreSQL/Supabase
+create table if not exists usuarios (id bigserial primary key,nome text,usuario text unique,senha text,perfil text,ativo text,analista text,permissoes jsonb default '[]');
+create table if not exists perfis (id bigserial primary key,nome text unique,permissoes jsonb default '[]');
+create table if not exists lojas (id bigserial primary key,codigo text,nome text,cnpj text,ie text,telefone text,cep text,uf text,cidade text,endereco text,latitude numeric,longitude numeric,analista text,proprietario text,feriado text,horario text,anexos jsonb default '[]');
+create table if not exists prestadores (id bigserial primary key,empresa text,responsavel text,telefone text,email text,cnpj text,cpf text,cep text,uf text,cidade text,endereco text,ativo text,raio_km numeric,valor_km numeric,latitude numeric,longitude numeric,servicos jsonb default '[]',anexos jsonb default '[]');
+create table if not exists proprietarios (id bigserial primary key,nome text,cnpj text,cpf text,telefone text,cep text,uf text,cidade text,endereco text,anexos jsonb default '[]');
+create table if not exists chamados (id bigserial primary key,numero_interno text,loja_nome text,analista text,prestador_nome text,tipo_servico text,prioridade text,status text,valor numeric,data_abertura date,descricao text,observacoes text,anexos jsonb default '[]');
+create table if not exists ordens_servico (id bigserial primary key,numero text,loja_nome text,prestador_nome text,chamados jsonb default '[]',valor_total numeric,created_at timestamptz default now());
+create table if not exists lembretes (id bigserial primary key,titulo text,data date,hora time,analista text,cor text,fixar_inicial text,chamado_id bigint,preventiva_id bigint,descricao text);
+create table if not exists preventivas (id bigserial primary key,titulo text,loja_nome text,data_lembrete date,status text,descricao text,lembrete_id bigint);
+create table if not exists pontos (id bigserial primary key,usuario_id bigint,usuario_nome text,data date,inicio time,fim time,total text,tipo text,obs text);
+
+-- V15.0 estável
+
+
+-- V20.8.10 - PERSISTÊNCIA PRINCIPAL DO SISTEMA EM JSON NO SUPABASE
 create table if not exists public.app_state (
-  id text primary key default 'default',
+  id text primary key,
   data jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
 
+-- Recomendado para este sistema: usar SUPABASE_SERVICE_ROLE_KEY no Render.
+-- Se usar ANON KEY, será necessário configurar policies. Para evitar erro de permissão, mantenha service_role no backend.
+alter table public.app_state disable row level security;
+
 insert into public.app_state (id, data, updated_at)
-values (
-  'default',
-  jsonb_build_object(
-    'version','20.9.3',
-    'config', jsonb_build_object(
-      'next', jsonb_build_object('usuario',2,'perfil',4,'loja',1,'prestador',1,'proprietario',1,'chamado',1,'numeroChamado',1,'os',1,'lembrete',1,'preventiva',1,'ponto',1),
-      'nomeSistema','V&B CHAMADOS',
-      'subtitulo','CHAMADOS DE MANUTENÇÃO',
-      'tema','VERDE',
-      'logoUrl','',
-      'logoLocal', null,
-      'regraNomeFilial','MESCLAR_NOME_CIDADE_UF',
-      'usarLogoLojaOS','SIM'
-    ),
-    'usuarios', jsonb_build_array(jsonb_build_object('id',1,'nome','OLITECH','usuario','OLITECH','senha','051309','perfil','ADMIN','ativo','SIM','analista','SIM','permissoes',jsonb_build_array('TODAS'))),
-    'perfis', jsonb_build_array(
-      jsonb_build_object('id',1,'nome','ADMIN','permissoes',jsonb_build_array('TODAS')),
-      jsonb_build_object('id',2,'nome','ANALISTA','permissoes',jsonb_build_array('INICIO','CHAMADOS','CHAMADOS_EDITAR','LOJAS','PRESTADORES','PROPRIETARIOS','LEMBRETES','PREVENTIVAS','ORDENS_SERVICO','IMPORTAR','RELATORIOS','PONTO_HORAS')),
-      jsonb_build_object('id',3,'nome','CONSULTA','permissoes',jsonb_build_array('INICIO','CHAMADOS','LOJAS','PRESTADORES','PROPRIETARIOS','RELATORIOS'))
-    ),
-    'tiposServico', jsonb_build_array('A DEFINIR','FAZ TUDO','ELÉTRICA','HIDRÁULICA','AR CONDICIONADO','DEDETIZAÇÃO','SERRALHERIA','CHAVEIRO','TELHADO','LIMPEZA','MANUTENÇÃO GERAL'),
-    'statusChamado', jsonb_build_array('ABERTO','AGENDADO','AGUARDANDO','EM ANDAMENTO','AGUARDANDO APROVAÇÃO','FINALIZADO','CANCELADO'),
-    'lojas', '[]'::jsonb,'prestadores','[]'::jsonb,'proprietarios','[]'::jsonb,'chamados','[]'::jsonb,'os','[]'::jsonb,'lembretes','[]'::jsonb,'preventivas','[]'::jsonb,'pontos','[]'::jsonb,'pagamentos','[]'::jsonb,'empresas','[]'::jsonb,'distance_cache','[]'::jsonb
-  ),
-  now()
-)
+values ('default', '{}'::jsonb, now())
 on conflict (id) do nothing;
 
-create table if not exists public.empresas (id bigserial primary key, nome text, logo text, created_at timestamptz default now());
-create table if not exists public.lojas (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.prestadores (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.proprietarios (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.chamados (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.ordens_servico (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.lembretes (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.preventivas (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.pontos (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
-create table if not exists public.distance_cache (id bigserial primary key, data jsonb default '{}'::jsonb, created_at timestamptz default now());
 
--- V20.9.3: logos/assinaturas devem ficar embutidos como dataUrl no app_state.
+-- V20.8.10 - GARANTIA DE PERSISTÊNCIA PRINCIPAL
+create table if not exists public.app_state (
+  id text primary key,
+  data jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
+alter table public.app_state disable row level security;
+grant all on table public.app_state to postgres;
+grant all on table public.app_state to service_role;
+grant select, insert, update on table public.app_state to authenticated;
+grant select, insert, update on table public.app_state to anon;
+insert into public.app_state (id, data, updated_at) values ('default', '{}'::jsonb, now()) on conflict (id) do nothing;
