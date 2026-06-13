@@ -192,3 +192,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Importação agora abre tela de loading e processa em segundo plano.
 - Leitura da planilha ficou mais leve para Render.
 - Mantida a estrutura/layout da V20.8 e demais funções sem alteração.
+
+
+## V20.8.13
+- Corrigido somente salvamento do nome da loja após importar PDF/cartão CNPJ.
+- O nome exibido no formulário agora é preservado exatamente ao salvar.
+- Removido tratamento amplo que podia reprocessar nome em rotas /lojas.
+- Demais funções mantidas.

@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-8-12-os-whatsapp-pdf-assinatura",
-  "version": "20.8.12",
+  "name": "sistema-vestcasa-v20-8-13-pdf-nome-loja-save-fix",
+  "version": "20.8.13",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",
