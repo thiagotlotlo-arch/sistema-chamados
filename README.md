@@ -185,3 +185,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Importa data abertura, autorizado/aprovado, descrição, agendado, pagamento/financeiro, prestador, telefone e valor.
 - Linha verde da planilha entra como FINALIZADO.
 - Logo da empresa e assinatura do analista salvas separadas em dataUrl no Supabase/estado.
+
+
+## V20.8.11
+- Corrigida somente a importação da planilha para evitar erro 502/travamento.
+- Importação agora abre tela de loading e processa em segundo plano.
+- Leitura da planilha ficou mais leve para Render.
+- Mantida a estrutura/layout da V20.8 e demais funções sem alteração.
