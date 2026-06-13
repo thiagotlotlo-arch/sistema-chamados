@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-8-19-save-all-fix",
-  "version": "20.8.19",
+  "name": "sistema-vestcasa-v20-8-20-editar-salvar-horas",
+  "version": "20.8.20",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",

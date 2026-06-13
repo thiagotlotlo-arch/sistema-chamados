@@ -245,3 +245,11 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Diagnóstico: /api/save/status
 - Flush manual: POST /api/save/flush
 - schema.sql atualizado para app_state.
+
+## V20.8.20
+- Corrigido erro `l is not defined` ao editar prestador.
+- Adicionado botão visual "Editar campos" em telas de edição.
+- Campos ficam bloqueados até clicar em editar; em novo cadastro já ficam liberados.
+- Reforço de salvamento em rotas de cadastro/edição.
+- Adicionado relatório de horas em `/ponto-horas/relatorio` com opção imprimir.
+- `/api/save/flush` também aceita GET para testar pelo navegador.
