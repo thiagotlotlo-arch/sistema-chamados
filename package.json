@@ -1,6 +1,6 @@
 {
-  "name": "sistema-vestcasa-v20-8-14-pdf-nome-whatsapp-valor-fix",
-  "version": "20.8.14",
+  "name": "sistema-vestcasa-v20-8-15-ajustes-os-loja-chamado",
+  "version": "20.8.15",
   "type": "module",
   "scripts": {
     "start": "node --max-old-space-size=384 server.js",

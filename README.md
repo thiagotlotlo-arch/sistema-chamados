@@ -206,3 +206,10 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - WhatsApp loja e prestador com link direto para PDF gerado em /os-pdf/:id.
 - PDF da O.S. soma valores quando houver junção.
 - Mantida estrutura/layout V20.8.
+
+## V20.8.15
+- Chamado rápido simplificado.
+- Loja: domingo abre/fecha, nome editado/importado e CEP por cidade/UF.
+- Valor com máscara R$.
+- O.S.: botões fixos com valor/sem valor, baixar PDF e WhatsApp loja/prestador.
+- PDF da O.S. com dados principais e total em junção.
