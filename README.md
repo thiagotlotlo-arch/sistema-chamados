@@ -253,3 +253,8 @@ Verificação: acesse `/api/v2084/status` logado. Precisa mostrar `supabaseConfi
 - Reforço de salvamento em rotas de cadastro/edição.
 - Adicionado relatório de horas em `/ponto-horas/relatorio` com opção imprimir.
 - `/api/save/flush` também aceita GET para testar pelo navegador.
+
+## V20.8.21
+- Corrige erro 502 no login: POST /login não força gravação no Supabase.
+- Cadastros/edições continuam salvando em background após a resposta.
+- Status: /api/save/status2.
