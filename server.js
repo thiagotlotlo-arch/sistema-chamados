@@ -13,7 +13,7 @@ import WebSocket from "ws";
 const __filename=fileURLToPath(import.meta.url);
 const __dirname=path.dirname(__filename);
 
-/* PATCH V20.10.0 - função de status fechado para evitar CLOSED IS NOT DEFINED */
+/* PATCH V20.9.8 - função de status fechado para evitar CLOSED IS NOT DEFINED */
 function closed(item){
   const s = String((item && (item.status || item.situacao || item.estado)) || item || '')
     .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
@@ -22,7 +22,7 @@ function closed(item){
 }
 
 
-/* PATCH V20.10.0 - moeda BR correta: R$800,00 = 800.00 */
+/* PATCH V20.9.8 - moeda BR correta: R$800,00 = 800.00 */
 function v2088_moneyBR(v){
   if(v == null || v === '') return 0;
   if(typeof v === 'number') return Number.isFinite(v) ? v : 0;
@@ -54,7 +54,7 @@ fs.mkdirSync(DATA_DIR,{recursive:true}); fs.mkdirSync(UPLOAD_DIR,{recursive:true
 const upload=multer({dest:UPLOAD_DIR,limits:{fileSize:30*1024*1024}});
 app.use(express.urlencoded({extended:true,limit:"50mb"}));
 
-/* PATCH V20.10.0 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
+/* PATCH V20.9.8 - preserva nome tratado digitado/mostrado na tela ao salvar loja */
 function patchNomeLojaBody(req,res,next){
   try{
     if(req && req.body){
@@ -84,7 +84,7 @@ function now(){return new Date().toISOString()} function today(){return now().sl
 function dig(v){return String(v||'').replace(/\D/g,'')} function norm(v){return String(v||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toUpperCase().trim()} function esc(v){return String(v??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function arr(v){return Array.isArray(v)?v:(v?[v]:[])} function money(v){return Number(String(v||0).replace(/[^\d,.-]/g,'').replace(',','.'))||0} function moeda(v){return Number(v||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'})} function br(v){const s=String(v||'').slice(0,10);const m=s.match(/^(\d{4})-(\d{2})-(\d{2})$/);return m?`${m[3]}/${m[2]}/${m[1]}`:s} function finalizado(s){return ['FINALIZADO','CANCELADO','FECHADO'].includes(norm(s))}
 
-/* PATCH V20.10.0 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
+/* PATCH V20.9.8 - PERSISTÊNCIA SUPABASE APP_STATE SEM ALTERAR FUNÇÕES */
 function envTrim(name){ return String(process.env[name] || '').trim().replace(/^['\"]|['\"]$/g,''); }
 const SUPABASE_URL = envTrim('SUPABASE_URL') || envTrim('NEXT_PUBLIC_SUPABASE_URL');
 const SUPABASE_KEY = envTrim('SUPABASE_SERVICE_ROLE_KEY') || envTrim('SUPABASE_SERVICE_KEY') || envTrim('SUPABASE_KEY') || envTrim('SUPABASE_ANON_KEY');
@@ -126,7 +126,7 @@ async function initPersistentDB(){
   persistentCache = fallback;
   if(!supabasePersist){
     lastPersistError = 'SUPABASE NÃO CONFIGURADO. VERIFIQUE SUPABASE_URL E SUPABASE_SERVICE_ROLE_KEY NO RENDER.';
-    console.error('V20.10.0:', lastPersistError);
+    console.error('V20.9.8:', lastPersistError);
     return;
   }
   try{
@@ -136,23 +136,23 @@ async function initPersistentDB(){
       persistentCache = mergeDB(emptyDB(), data.data);
       fs.writeFileSync(DB_FILE, JSON.stringify(persistentCache,null,2),'utf8');
       supabaseOk = true; remoteLoaded = true; lastRemoteLoadAt = data.updated_at || new Date().toISOString(); lastPersistError='';
-      console.log('V20.10.0 carregado do Supabase app_state:', SUPABASE_STATE_ID);
+      console.log('V20.9.8 carregado do Supabase app_state:', SUPABASE_STATE_ID);
     }else{
       // Proteção: não apaga dados remotos nem força base vazia sem necessidade.
       if(dbHasRealData(fallback)){
         await saveRemoteNow(fallback);
-        console.log('V20.10.0 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
+        console.log('V20.9.8 Supabase estava vazio: enviado backup local com dados para app_state:', SUPABASE_STATE_ID);
       }else{
         const inicial = mergeDB(emptyDB(), {});
         persistentCache = inicial;
         await saveRemoteNow(inicial);
-        console.log('V20.10.0 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
+        console.log('V20.9.8 Supabase estava vazio: criado app_state inicial:', SUPABASE_STATE_ID);
       }
       remoteLoaded = true;
     }
   }catch(e){
     supabaseOk = false; remoteLoaded = false; lastSaveOk = false; lastPersistError = e.message || String(e);
-    console.error('V20.10.0 ERRO SUPABASE:', lastPersistError);
+    console.error('V20.9.8 ERRO SUPABASE:', lastPersistError);
     console.error('IMPORTANTE: enquanto este erro existir, os dados ficam apenas temporários/local no Render. Rode o schema.sql e use SERVICE_ROLE_KEY.');
   }
 }
@@ -168,13 +168,13 @@ async function saveRemoteNow(d){
 function scheduleRemoteSave(d){
   persistentCache = mergeDB(emptyDB(), d);
   // Sempre grava JSON local também, mas fonte principal é Supabase.
-  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.10.0 erro JSON local:', e.message||e); }
+  try{ fs.writeFileSync(DB_FILE,JSON.stringify(persistentCache,null,2),'utf8'); }catch(e){ console.error('V20.9.8 erro JSON local:', e.message||e); }
   if(!supabasePersist){ lastSaveOk=false; lastPersistError='SUPABASE NÃO CONFIGURADO'; return; }
   if(savingRemote){ pendingRemote = true; return; }
   savingRemote = true;
   setTimeout(async()=>{
-    try{ await saveRemoteNow(persistentCache); console.log('V20.10.0 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
-    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.10.0 erro ao salvar Supabase:', lastPersistError); }
+    try{ await saveRemoteNow(persistentCache); console.log('V20.9.8 salvo no Supabase app_state:', SUPABASE_STATE_ID); }
+    catch(e){ lastSaveOk=false; supabaseOk=false; lastPersistError=e.message||String(e); console.error('V20.9.8 erro ao salvar Supabase:', lastPersistError); }
     finally{ savingRemote=false; if(pendingRemote){ pendingRemote=false; scheduleRemoteSave(persistentCache); } }
   }, 50);
 }
@@ -184,14 +184,14 @@ function save(d){ persistentCache=mergeDB(emptyDB(), hydratePersistentImages(d))
 function user(req){return req.session.user||null} function can(req,perm){const u=user(req); if(!u)return false; if(norm(u.usuario)==='OLITECH'||norm(u.perfil)==='ADMIN')return true; const d=load(); const uu=d.usuarios.find(x=>String(x.id)===String(u.id)||norm(x.usuario)===norm(u.usuario))||u; const pf=d.perfis.find(p=>norm(p.nome)===norm(uu.perfil)); const ps=[...arr(uu.permissoes),...arr(pf?.permissoes)].map(norm); return ps.includes('TODAS')||ps.includes(norm(perm))}
 function auth(req,res,nextfn){if(!user(req))return res.redirect('/login');nextfn()} function need(p){return (req,res,nextfn)=>can(req,p)?nextfn():res.status(403).send(page(req,'Sem permissão',`<div class="card"><h2>🚫 Sem permissão</h2><p>Permissão necessária: ${esc(p)}</p><a class="btn" href="/">🏠 Início</a></div>`))}
 
-/* PATCH V20.10.0 - LOGOS/ASSINATURAS PERSISTENTES NO SUPABASE */
+/* PATCH V20.9.8 - LOGOS/ASSINATURAS PERSISTENTES NO SUPABASE */
 function persistentFileObj(f){
   if(!f) return null;
   const o={original:f.originalname,path:'uploads/'+f.filename,filename:f.filename,mimetype:f.mimetype,size:f.size,at:now()};
   try{
     const mt=String(f.mimetype||'');
     if(mt.startsWith('image/')) o.dataUrl='data:'+mt+';base64,'+fs.readFileSync(f.path).toString('base64');
-  }catch(e){ console.error('V20.10.0 erro ao embutir imagem:', e.message||e); }
+  }catch(e){ console.error('V20.9.8 erro ao embutir imagem:', e.message||e); }
   return o;
 }
 function hydrateFileDataUrl(obj){
@@ -210,42 +210,10 @@ function hydrateFileDataUrl(obj){
 }
 function hydratePersistentImages(d){ try{return hydrateFileDataUrl(d)}catch(e){return d} }
 
-/* PATCH V20.10.0 - SEPARAÇÃO DEFINITIVA LOGO EMPRESA x ASSINATURA USUÁRIO */
-function v2099_imgUrl(v){
-  try{
-    if(!v) return '';
-    if(typeof v === 'string') return v;
-    if(v.dataUrl) return v.dataUrl;
-    if(v.url) return v.url;
-    if(v.path) return '/' + String(v.path).replace(/^\/+|\\/g,'/');
-  }catch(e){}
-  return '';
-}
-function v2099_empresaLogo(d){
-  d=d||{}; d.config=d.config||{};
-  return v2099_imgUrl(d.config.logoEmpresaLocal) || v2099_imgUrl(d.config.logoLocal) || d.config.logoEmpresaUrl || d.config.logoUrl || d.config.logo || '';
-}
-function v2099_usuarioAssinatura(u){
-  return v2099_imgUrl(u?.assinaturaUsuario) || v2099_imgUrl(u?.assinaturaDigital) || v2099_imgUrl(u?.assinatura) || v2099_imgUrl(u?.assinaturaLocal) || v2099_imgUrl(u?.imagemAssinatura) || v2099_imgUrl(u?.fotoAssinatura) || '';
-}
-function v2099_preservaLogoEmpresaAntes(d){
-  const c=(d&&d.config)||{};
-  return {logoEmpresaLocal:c.logoEmpresaLocal, logoLocal:c.logoLocal, logoEmpresaUrl:c.logoEmpresaUrl, logoUrl:c.logoUrl, logo:c.logo};
-}
-function v2099_restauraLogoEmpresaDepois(d, oldLogo){
-  d=d||{}; d.config=d.config||{};
-  if(oldLogo.logoEmpresaLocal && !d.config.logoEmpresaLocal) d.config.logoEmpresaLocal=oldLogo.logoEmpresaLocal;
-  if(oldLogo.logoLocal && !d.config.logoLocal) d.config.logoLocal=oldLogo.logoLocal;
-  if(oldLogo.logoEmpresaUrl && !d.config.logoEmpresaUrl) d.config.logoEmpresaUrl=oldLogo.logoEmpresaUrl;
-  if(oldLogo.logoUrl && !d.config.logoUrl) d.config.logoUrl=oldLogo.logoUrl;
-  if(oldLogo.logo && !d.config.logo) d.config.logo=oldLogo.logo;
-}
-
-
-function fileObj(f){return persistentFileObj(f)} function oneFile(req,n){return fileObj(req.files?.[n]?.[0]||req.file)} function manyFiles(req,n){return (req.files?.[n]||[]).map(fileObj).filter(Boolean)} function publicFile(f){if(!f)return ''; if(typeof f==='string')return f; if(f.dataUrl)return f.dataUrl; return '/'+String(f.path||'').replace(/^\/+|\\/g,'/')} function appLogo(d){return v2099_empresaLogo(d)}
+function fileObj(f){return persistentFileObj(f)} function oneFile(req,n){return fileObj(req.files?.[n]?.[0]||req.file)} function manyFiles(req,n){return (req.files?.[n]||[]).map(fileObj).filter(Boolean)} function publicFile(f){if(!f)return ''; if(typeof f==='string')return f; if(f.dataUrl)return f.dataUrl; return '/'+String(f.path||'').replace(/^\/+|\\/g,'/')} function appLogo(d){d=d||{};d.config=d.config||{};return publicFile(d.config.logoLocal)||d.config.logoUrl||d.config.logo||''}
 function menu(req){const items=[['/','🏠 Início','INICIO'],['/chamados','🎫 Chamados','CHAMADOS'],['/chamados-por-analista','👤 Chamados por Analista','CHAMADOS'],['/lojas','🏬 Lojas','LOJAS'],['/prestadores','🧰 Prestadores','PRESTADORES'],['/proprietarios','👥 Proprietários','PROPRIETARIOS'],['/lembretes','📌 Lembretes','LEMBRETES'],['/preventivas','🗓️ Preventivas','PREVENTIVAS'],['/os','📄 Ordens de Serviço','ORDENS_SERVICO'],['/importar-planilha','📥 Importar','IMPORTAR'],['/relatorios','📊 Relatórios','RELATORIOS'],['/ponto-horas','⏱️ Ponto/Horas','PONTO_HORAS'],['/config','⚙️ Config','CONFIG'],['/logout','🚪 Sair','INICIO']];return `<nav>${items.filter(i=>i[0]==='/logout'||can(req,i[2])).map(i=>`<a class="btn menu-btn" href="${i[0]}">${i[1]}</a>`).join('')}</nav>`}
 
-/* PATCH V20.10.0 - assinatura digital do analista na O.S. */
+/* PATCH V20.9.8 - assinatura digital do analista na O.S. */
 function v2088_publicImg(f){
   try{
     if(!f) return '';
@@ -268,7 +236,11 @@ function v2088_assinaturaUsuario(d, nomeAnalista){
       });
     }
     if(!u && usuarios.length === 1) u = usuarios[0];
-    return v2099_usuarioAssinatura(u);
+    if(!u) return '';
+    return v2088_publicImg(
+      u.assinaturaDigital || u.assinatura || u.assinaturaLocal || u.imagemAssinatura ||
+      u.fotoAssinatura || u.signature || u.signatureImage || u.assinaturaUsuario || u.assinaturaAnalista
+    );
   }catch(e){ return ''; }
 }
 function v2088_assinaturaHtml(d, nomeAnalista){
@@ -283,7 +255,7 @@ function v2088_injetarAssinaturaOS(html,d,analista){
   }catch(e){ return html; }
 }
 
-function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.10.0</div><script src="/public/app.js"></script></body></html>`}
+function page(req,title,body){const d=load(),c=d.config,logo=appLogo(d);return `<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(c.nomeSistema)} - ${esc(title)}</title><link rel="stylesheet" href="/public/style.css"></head><body class="theme-${esc(norm(c.tema).toLowerCase())}">${user(req)?`<header><div class="brand">${logo?`<img src="${esc(logo)}" onerror="this.style.display='none'">`:`<div class="logo-fallback">VB</div>`}<div><h1>${esc(c.nomeSistema)}</h1><p>${esc(c.subtitulo)}</p></div></div>${menu(req)}</header>`:''}<main>${body}</main><div class="version">V20.9.8</div><script src="/public/app.js"></script></body></html>`}
 function errorPage(req,e){console.error(e);return page(req,'Erro tratado',`<div class="card"><h2>⚠️ Erro tratado</h2><p>O sistema encontrou um erro nesta operação, mas não travou.</p><p><b>Detalhe:</b> ${esc(e?.message||String(e))}</p><a class="btn" href="/">🏠 Início</a> <a class="btn secondary" href="javascript:history.back()">↩️ Voltar</a></div>`)}
 function tabela(headers,rows,empty='Nenhum registro encontrado'){return `<table><thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead><tbody>${rows.length?rows.join(''):`<tr><td colspan="${headers.length}">${esc(empty)}</td></tr>`}</tbody></table>`}
 function busca(action,ph){return `<form class="card search" method="get" action="${action}"><input name="q" placeholder="${esc(ph)}"><button>🔎 Buscar</button><a class="btn" href="${action}?mostrar=1">Mostrar todos</a><a class="btn secondary" href="${action}">Limpar</a></form>`}
@@ -322,7 +294,7 @@ function syncPreventiva(d,p){let l=d.lembretes.find(x=>String(x.preventivaId)===
 
 app.get('/login',(req,res)=>res.send(`<!doctype html><html lang="pt-br"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Login</title><link rel="stylesheet" href="/public/style.css"></head><body class="login-body"><form class="login-card" method="post"><div class="login-logo">VB</div><h1>V&B CHAMADOS</h1><label>Usuário<input name="usuario" autocomplete="username" autofocus></label><label>Senha<input type="password" name="senha" autocomplete="current-password"></label><label class="inline"><input type="checkbox" name="lembrar" value="SIM"> Salvar usuário</label><button>Entrar</button></form><script src="/public/app.js"></script></body></html>`));
 app.post('/login',(req,res)=>{const d=load();const u=d.usuarios.find(x=>norm(x.ativo||'SIM')!=='NÃO'&&norm(x.usuario)===norm(req.body.usuario)&&String(x.senha||'')===String(req.body.senha||''));if(!u)return res.send(page(req,'Login',`<div class="login-card"><p class="alert">Usuário ou senha inválidos.</p><a class="btn" href="/login">Tentar novamente</a></div>`));req.session.user={id:u.id,nome:u.nome,usuario:u.usuario,perfil:u.perfil,permissoes:u.permissoes||[]};res.redirect('/')}); app.get('/logout',(req,res)=>req.session.destroy(()=>res.redirect('/login')));
-/* PATCH V20.10.0 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
+/* PATCH V20.9.8 - HOME MOBILE RÁPIDA: GRID SÓ APÓS BUSCA/MOSTRAR TODOS */
 app.get('/',auth,(req,res)=>{
   const d=load();
   const q=norm(req.query.q||'');
@@ -337,17 +309,20 @@ app.get('/',auth,(req,res)=>{
 function postit(l){const cor=norm(l.cor||'AMARELO').toLowerCase();const href=l.chamadoId?`/chamados/${l.chamadoId}/editar`:(l.preventivaId?`/preventivas/${l.preventivaId}/editar`:`/lembretes/${l.id}/editar`);return `<a class="postit ${cor}" href="${href}"><b>${esc(l.titulo)}</b><span>📅 ${br(l.data)} ${esc(l.hora||'')}</span><small>${esc(l.descricao||'')}</small></a>`}
 
 app.get('/api/autocomplete',auth,(req,res)=>{const d=load(),tipo=norm(req.query.tipo||'GERAL'),q=norm(req.query.q||''),di=dig(req.query.q||'');if(q.length<2&&di.length<2)return res.json({ok:true,items:[]});const items=[];const add=(tipo,id,label,value,sub,raw)=>items.push({tipo,id,label,value,sub,raw});if(['LOJAS','GERAL'].includes(tipo))d.lojas.forEach(l=>add('loja',l.id,l.nome,l.nome,[l.codigo,l.cidade,l.uf,l.cnpj,l.cep].filter(Boolean).join(' | '),l));if(['PRESTADORES','GERAL'].includes(tipo))d.prestadores.forEach(p=>add('prestador',p.id,p.empresa||p.responsavel,p.empresa||p.responsavel,[p.responsavel,p.cidade,p.uf,p.cnpj,(p.servicos||[]).join(',')].filter(Boolean).join(' | '),p));if(['PROPRIETARIOS','GERAL'].includes(tipo))d.proprietarios.forEach(p=>add('proprietario',p.id,p.nome,p.nome,[p.cidade,p.uf,p.cnpj,p.cpf].filter(Boolean).join(' | '),p));if(['ANALISTAS','USUARIOS','GERAL'].includes(tipo))d.usuarios.filter(u=>norm(u.ativo)!=='NÃO').forEach(u=>add('usuario',u.id,u.nome||u.usuario,u.nome||u.usuario,[u.usuario,u.perfil].filter(Boolean).join(' | '),u));if(['CHAMADOS','GERAL'].includes(tipo))d.chamados.forEach(c=>add('chamado',c.id,`${c.numeroInterno||c.id} - ${c.lojaNome||''}`,String(c.numeroInterno||c.id),[c.prestadorNome,c.status,c.tipoServico].filter(Boolean).join(' | '),c));if(['SERVICOS','GERAL'].includes(tipo))d.tiposServico.forEach(s=>add('servico',s,s,s,'Tipo de serviço',{nome:s}));const ok=items.filter(x=>norm([x.label,x.sub,JSON.stringify(x.raw)].join(' ')).includes(q)||di&&dig([x.label,x.sub].join(' ')).includes(di)).slice(0,40);res.json({ok:true,items:ok})});
-app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.10.0'}));
+app.get('/api/prestadores-sugeridos',auth,(req,res)=>res.json({ok:true,items:sugerePrestadores(load(),req.query.loja||req.query.lojaId,req.query.tipo||req.query.tipoServico)})); app.get('/api/status',auth,(req,res)=>res.json({ok:true,version:'V20.9.8'}));
 
-app.get('/config',auth,need('CONFIG'),(req,res)=>{const d=load(),c=d.config;res.send(page(req,'Config',`<section class="card"><h2>⚙️ Configurações</h2><form method="post" enctype="multipart/form-data" class="form"><div class="grid4"><label>Nome sistema<input name="nomeSistema" value="${esc(c.nomeSistema)}"></label><label>Subtítulo<input name="subtitulo" value="${esc(c.subtitulo)}"></label><label>Tema<select name="tema">${['VERDE','AZUL','ESCURO','ROXO','LARANJA'].map(t=>`<option ${norm(c.tema)===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Logo URL da empresa<input name="logoUrl" value="${esc(c.logoEmpresaUrl||c.logoUrl||'')}"></label><label>Logo local da empresa<input type="file" name="logoLocal" accept="image/*"></label>${appLogo(d)?`<label>Logo atual da empresa<div class="logo-preview"><img src="${esc(appLogo(d))}" onerror="this.style.display='none'"></div></label>`:''}<label>Logo da O.S.<select name="usarLogoLojaOS"><option value="SIM" ${c.usarLogoLojaOS!=='NAO'?'selected':''}>REUTILIZAR LOGO DA LOJA</option><option value="NAO" ${c.usarLogoLojaOS==='NAO'?'selected':''}>USAR LOGO DA EMPRESA</option></select></label><label>Filial / nomes repetidos<select name="regraNomeFilial"><option value="ORIGINAL" ${c.regraNomeFilial==='ORIGINAL'?'selected':''}>ORIGINAL</option><option value="MESCLAR_NOME_CIDADE_UF" ${c.regraNomeFilial!=='ORIGINAL'?'selected':''}>MESCLAR NOME + CIDADE + UF</option></select></label></div><button>💾 Salvar</button></form></section><section class="card"><h2>Cadastros de apoio</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a><a class="btn" href="/perfis">🔐 Perfis/Permissões</a><a class="btn" href="/backup">💾 Backup/Restauração</a><a class="btn" href="/tipos-servico">🛠️ Tipos de serviço</a><a class="btn" href="/diagnostico">🩺 Diagnóstico</a></section>`))});
-app.post('/config',auth,need('CONFIG'),upload.single('logoLocal'),(req,res)=>{const d=load();d.config=d.config||{};Object.assign(d.config,{nomeSistema:norm(req.body.nomeSistema||d.config.nomeSistema),subtitulo:norm(req.body.subtitulo||d.config.subtitulo),tema:norm(req.body.tema||d.config.tema),logoEmpresaUrl:(req.body.logoUrl||'').trim(),logoUrl:(req.body.logoUrl||'').trim(),regraNomeFilial:req.body.regraNomeFilial||'ORIGINAL',usarLogoLojaOS:req.body.usarLogoLojaOS||d.config.usarLogoLojaOS||'SIM'});if(req.file){const logo=fileObj(req.file);d.config.logoEmpresaLocal=logo;d.config.logoLocal=logo;}save(d);res.redirect('/config')});
+app.get('/config',auth,need('CONFIG'),(req,res)=>{const d=load(),c=d.config;res.send(page(req,'Config',`<section class="card"><h2>⚙️ Configurações</h2><form method="post" enctype="multipart/form-data" class="form"><div class="grid4"><label>Nome sistema<input name="nomeSistema" value="${esc(c.nomeSistema)}"></label><label>Subtítulo<input name="subtitulo" value="${esc(c.subtitulo)}"></label><label>Tema<select name="tema">${['VERDE','AZUL','ESCURO','ROXO','LARANJA'].map(t=>`<option ${norm(c.tema)===t?'selected':''}>${t}</option>`).join('')}</select></label><label>Logo URL<input name="logoUrl" value="${esc(c.logoUrl)}"></label><label>Logo local<input type="file" name="logoLocal" accept="image/*"></label>${appLogo(d)?`<label>Logo atual<div class="logo-preview"><img src="${esc(appLogo(d))}" onerror="this.style.display='none'"></div></label>`:''}<label>Logo da O.S.<select name="usarLogoLojaOS"><option value="SIM" ${c.usarLogoLojaOS!=='NAO'?'selected':''}>REUTILIZAR LOGO DA LOJA</option><option value="NAO" ${c.usarLogoLojaOS==='NAO'?'selected':''}>USAR LOGO DA EMPRESA</option></select></label><label>Filial / nomes repetidos<select name="regraNomeFilial"><option value="ORIGINAL" ${c.regraNomeFilial==='ORIGINAL'?'selected':''}>ORIGINAL</option><option value="MESCLAR_NOME_CIDADE_UF" ${c.regraNomeFilial!=='ORIGINAL'?'selected':''}>MESCLAR NOME + CIDADE + UF</option></select></label></div><button>💾 Salvar</button></form></section><section class="card"><h2>Cadastros de apoio</h2><a class="btn" href="/usuarios">👤 Usuários/Analistas</a><a class="btn" href="/perfis">🔐 Perfis/Permissões</a><a class="btn" href="/backup">💾 Backup/Restauração</a><a class="btn" href="/tipos-servico">🛠️ Tipos de serviço</a><a class="btn" href="/diagnostico">🩺 Diagnóstico</a></section>`))});
+app.post('/config',auth,need('CONFIG'),upload.single('logoLocal'),(req,res)=>{const d=load();Object.assign(d.config,{nomeSistema:norm(req.body.nomeSistema||d.config.nomeSistema),subtitulo:norm(req.body.subtitulo||d.config.subtitulo),tema:norm(req.body.tema||d.config.tema),logoUrl:(req.body.logoUrl||'').trim(),regraNomeFilial:req.body.regraNomeFilial||'ORIGINAL',usarLogoLojaOS:req.body.usarLogoLojaOS||d.config.usarLogoLojaOS||'SIM'});if(req.file)d.config.logoLocal=fileObj(req.file);save(d);res.redirect('/config')});
 app.get('/diagnostico',auth,need('CONFIG'),(req,res)=>{const d=load();const ch=[['Usuários',d.usuarios.length],['Perfis',d.perfis.length],['Lojas',d.lojas.length],['Prestadores',d.prestadores.length],['Chamados',d.chamados.length],['Lembretes',d.lembretes.length],['Preventivas',d.preventivas.length],['Tipos de serviço',d.tiposServico.length]];res.send(page(req,'Diagnóstico',`<div class="bar"><h2>🩺 Diagnóstico</h2><a class="btn" href="/config">Voltar</a></div><div class="card">${tabela(['Módulo','Registros','OK'],ch.map(c=>`<tr><td>${c[0]}</td><td>${c[1]}</td><td>✅</td></tr>`))}</div>`))});
 
 app.get('/usuarios',auth,need('USUARIOS'),(req,res)=>{const d=load(),q=norm(req.query.q||'');const lista=d.usuarios.filter(u=>!q||norm([u.nome,u.usuario,u.perfil,u.email].join(' ')).includes(q));res.send(page(req,'Usuários',`<div class="bar"><h2>👤 Usuários/Analistas</h2><a class="btn" href="/usuarios/novo">➕ Novo</a><a class="btn secondary" href="/config">Config</a></div>${busca('/usuarios','Buscar usuário, analista, perfil...')}<div class="card">${tabela(['Nome','Usuário','Perfil','Analista','Ativo','Ações'],lista.map(u=>`<tr><td>${esc(u.nome)}</td><td>${esc(u.usuario)}</td><td>${esc(u.perfil)}</td><td>${esc(u.analista||'SIM')}</td><td>${esc(u.ativo||'SIM')}</td><td><a class="btn small" href="/usuarios/${u.id}/editar">✏️ Editar</a>${norm(u.usuario)!=='OLITECH'?`<form class="inline-form" method="post" action="/usuarios/${u.id}/excluir"><button class="small danger">🗑️ Excluir</button></form>`:''}</td></tr>`))}</div>`))});
 
-/* PATCH V20.10.0 - assinatura digital persistente no Supabase */
+/* PATCH V20.9.8 - assinatura digital persistente no Supabase */
 function assinaturaUsuarioAtual(u){
-  return v2099_usuarioAssinatura(u);
+  try{
+    const img = publicFile(u?.assinaturaDigital || u?.assinatura || u?.assinaturaLocal || u?.imagemAssinatura || u?.fotoAssinatura);
+    return img || '';
+  }catch(e){ return ''; }
 }
 function assinaturaPreviewHtml(u){
   const img = assinaturaUsuarioAtual(u);
@@ -357,14 +332,14 @@ async function salvarUsuarioPersistente(d){
   const payload = mergeDB(emptyDB(), hydratePersistentImages(d));
   try{ await saveRemoteNow(payload); }
   catch(e){
-    console.error('V20.10.0 erro ao salvar usuário/assinatura no Supabase:', e.message||e);
+    console.error('V20.9.8 erro ao salvar usuário/assinatura no Supabase:', e.message||e);
     save(payload);
     throw e;
   }
 }
 
 function usuarioForm(req,u={}){const d=load(),edit=!!u.id;return page(req,edit?'Editar usuário':'Novo usuário',`<div class="bar"><h2>${edit?'✏️ Editar':'➕ Novo'} usuário/analista</h2><a class="btn secondary" href="/usuarios">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data"><div class="grid4"><label>Nome<input name="nome" value="${esc(u.nome)}" required></label><label>Usuário<input name="usuario" value="${esc(u.usuario)}" required></label><label>Senha<input name="senha" value="${esc(u.senha)}" required></label><label>Perfil<select name="perfil">${d.perfis.map(p=>`<option ${norm(u.perfil||'ANALISTA')===norm(p.nome)?'selected':''}>${esc(p.nome)}</option>`).join('')}</select></label><label>Ativo<select name="ativo">${['SIM','NÃO'].map(x=>`<option ${norm(u.ativo||'SIM')===x?'selected':''}>${x}</option>`).join('')}</select></label><label>É analista?<select name="analista">${['SIM','NÃO'].map(x=>`<option ${norm(u.analista||'SIM')===x?'selected':''}>${x}</option>`).join('')}</select></label><label>Email<input name="email" value="${esc(u.email)}"></label><label>Telefone<input name="telefone" value="${esc(u.telefone)}"></label><label>Assinatura digital<input type="file" name="assinatura" accept="image/*"></label>${assinaturaPreviewHtml(u)}</div><h3>Permissões específicas</h3><div class="perm-grid">${PERMS.map(p=>`<label class="checkline"><input type="checkbox" name="permissoes" value="${p}" ${arr(u.permissoes).map(norm).includes(p)?'checked':''}> ${p.replaceAll('_',' ')}</label>`).join('')}</div><button>💾 Salvar</button></form>`)}
-app.get('/usuarios/novo',auth,need('USUARIOS'),(req,res)=>res.send(usuarioForm(req)));app.get('/usuarios/:id/editar',auth,need('USUARIOS'),(req,res)=>res.send(usuarioForm(req,load().usuarios.find(u=>String(u.id)===String(req.params.id))||{})));app.post(['/usuarios/novo','/usuarios/:id/editar'],auth,need('USUARIOS'),upload.single('assinatura'),async (req,res)=>{try{const d=load();const logoEmpresaAntes=v2099_preservaLogoEmpresaAntes(d);let u=req.params.id?d.usuarios.find(x=>String(x.id)===String(req.params.id)):null;if(!u){u={id:next(d,'usuario')};d.usuarios.push(u)}const assinaturaAntiga=u.assinaturaUsuario||u.assinaturaDigital||u.assinatura||u.assinaturaLocal||u.imagemAssinatura||u.fotoAssinatura;Object.assign(u,{nome:norm(req.body.nome),usuario:norm(req.body.usuario),senha:String(req.body.senha||''),perfil:norm(req.body.perfil||'ANALISTA'),ativo:norm(req.body.ativo||'SIM'),analista:norm(req.body.analista||'SIM'),email:req.body.email||'',telefone:dig(req.body.telefone),permissoes:arr(req.body.permissoes).map(norm)});if(req.file){const ass=fileObj(req.file);u.assinaturaUsuario=ass;u.assinaturaDigital=ass;u.assinatura=ass;u.assinaturaLocal=ass;}else if(assinaturaAntiga){u.assinaturaUsuario=u.assinaturaUsuario||assinaturaAntiga;u.assinaturaDigital=u.assinaturaDigital||assinaturaAntiga;u.assinatura=u.assinatura||assinaturaAntiga;u.assinaturaLocal=u.assinaturaLocal||assinaturaAntiga;}v2099_restauraLogoEmpresaDepois(d,logoEmpresaAntes);await salvarUsuarioPersistente(d);res.redirect('/usuarios')}catch(e){res.status(500).send(errorPage(req,e))}});app.post('/usuarios/:id/excluir',auth,need('USUARIOS'),(req,res)=>{const d=load();d.usuarios=d.usuarios.filter(u=>String(u.id)!==String(req.params.id)||norm(u.usuario)==='OLITECH');save(d);res.redirect('/usuarios')});
+app.get('/usuarios/novo',auth,need('USUARIOS'),(req,res)=>res.send(usuarioForm(req)));app.get('/usuarios/:id/editar',auth,need('USUARIOS'),(req,res)=>res.send(usuarioForm(req,load().usuarios.find(u=>String(u.id)===String(req.params.id))||{})));app.post(['/usuarios/novo','/usuarios/:id/editar'],auth,need('USUARIOS'),upload.single('assinatura'),async (req,res)=>{try{const d=load();let u=req.params.id?d.usuarios.find(x=>String(x.id)===String(req.params.id)):null;if(!u){u={id:next(d,'usuario')};d.usuarios.push(u)}const assinaturaAntiga=u.assinaturaDigital||u.assinatura||u.assinaturaLocal||u.imagemAssinatura||u.fotoAssinatura;Object.assign(u,{nome:norm(req.body.nome),usuario:norm(req.body.usuario),senha:String(req.body.senha||''),perfil:norm(req.body.perfil||'ANALISTA'),ativo:norm(req.body.ativo||'SIM'),analista:norm(req.body.analista||'SIM'),email:req.body.email||'',telefone:dig(req.body.telefone),permissoes:arr(req.body.permissoes).map(norm)});if(req.file){const ass=fileObj(req.file);u.assinatura=ass;u.assinaturaDigital=ass;u.assinaturaLocal=ass;}else if(assinaturaAntiga){u.assinatura=u.assinatura||assinaturaAntiga;u.assinaturaDigital=u.assinaturaDigital||assinaturaAntiga;u.assinaturaLocal=u.assinaturaLocal||assinaturaAntiga;}await salvarUsuarioPersistente(d);res.redirect('/usuarios')}catch(e){res.status(500).send(errorPage(req,e))}});app.post('/usuarios/:id/excluir',auth,need('USUARIOS'),(req,res)=>{const d=load();d.usuarios=d.usuarios.filter(u=>String(u.id)!==String(req.params.id)||norm(u.usuario)==='OLITECH');save(d);res.redirect('/usuarios')});
 app.get('/perfis',auth,need('USUARIOS'),(req,res)=>{const d=load();res.send(page(req,'Perfis',`<div class="bar"><h2>🔐 Perfis/Permissões</h2><a class="btn" href="/perfis/novo">➕ Novo</a></div><div class="card">${tabela(['Perfil','Permissões','Ações'],d.perfis.map(p=>`<tr><td>${esc(p.nome)}</td><td>${esc(arr(p.permissoes).join(', '))}</td><td><a class="btn small" href="/perfis/${p.id}/editar">✏️ Editar</a></td></tr>`))}</div>`))});function perfilForm(req,p={}){return page(req,'Perfil',`<div class="bar"><h2>🔐 Perfil</h2><a class="btn secondary" href="/perfis">Voltar</a></div><form class="card form" method="post"><label>Nome<input name="nome" value="${esc(p.nome)}" required></label><div class="perm-grid">${PERMS.map(x=>`<label class="checkline"><input type="checkbox" name="permissoes" value="${x}" ${arr(p.permissoes).map(norm).includes(x)?'checked':''}> ${x.replaceAll('_',' ')}</label>`).join('')}</div><button>💾 Salvar</button></form>`)}app.get('/perfis/novo',auth,need('USUARIOS'),(req,res)=>res.send(perfilForm(req)));app.get('/perfis/:id/editar',auth,need('USUARIOS'),(req,res)=>res.send(perfilForm(req,load().perfis.find(p=>String(p.id)===String(req.params.id))||{})));app.post(['/perfis/novo','/perfis/:id/editar'],auth,need('USUARIOS'),(req,res)=>{const d=load();let p=req.params.id?d.perfis.find(x=>String(x.id)===String(req.params.id)):null;if(!p){p={id:next(d,'perfil')};d.perfis.push(p)}p.nome=norm(req.body.nome);p.permissoes=arr(req.body.permissoes).map(norm);save(d);res.redirect('/perfis')});
 
 function lojaForm(req,l={}){const d=load(),edit=!!l.id;return page(req,edit?'Editar loja':'Nova loja',`<div class="bar"><h2>${edit?'✏️ Editar':'➕ Nova'} loja</h2><a class="btn secondary" href="/lojas">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data"><details open><summary>📄 Preencher por PDF/cartão CNPJ</summary><input type="file" name="pdf" accept=".pdf"><button name="acao" value="pdf" formnovalidate>🔎 Pesquisar PDF</button><p class="hint">Ao importar PDF de filial, aplica a regra da Config: MEGA VEST CASA + CIDADE + UF.</p></details><div class="grid4"><label>Código/Filial<input name="codigo" value="${esc(l.codigo||l.id||'')}"></label><label>Tipo código<select name="tipoCodigo"><option>${esc(l.tipoCodigo||'SOMENTE NÚMERO')}</option><option>SOMENTE NÚMERO</option><option>NOME + NÚMERO</option></select></label><label>Nome loja<input name="nome" value="${esc(l.nome)}" required></label><label>Responsável loja<input name="responsavel" value="${esc(l.responsavel)}"></label><label>CNPJ<input name="cnpj" value="${esc(l.cnpj)}" data-mask="cnpj"></label><label>I.E.<input name="ie" value="${esc(l.ie)}"></label><label>Telefone<input name="telefone" value="${esc(l.telefone)}" data-mask="telefone"></label><label>WhatsApp responsável<input name="whatsappResponsavel" value="${esc(l.whatsappResponsavel||'')}" data-mask="telefone"></label><label>CEP<input name="cep" value="${esc(l.cep)}" data-mask="cep"></label><label>Estado/UF<input name="uf" value="${esc(l.uf||l.estado)}"></label><label>Cidade<input name="cidade" value="${esc(l.cidade)}"></label><label>Endereço<input name="endereco" value="${esc(l.endereco)}"></label><label>Latitude<input name="latitude" value="${esc(l.latitude)}"></label><label>Longitude<input name="longitude" value="${esc(l.longitude)}"></label><label>Analista responsável<input name="analista" value="${esc(l.analista)}" data-auto="analistas"></label><label>Proprietário<input name="proprietario" value="${esc(l.proprietario)}" data-auto="proprietarios"></label><label>Feriado<select name="feriado"><option ${norm(l.feriado||'FECHADO')==='FECHADO'?'selected':''}>FECHADO</option><option ${norm(l.feriado)==='ABERTO'?'selected':''}>ABERTO</option></select></label><label>Logo URL<input name="logoUrl" value="${esc(l.logoUrl)}"></label><label>Logo local<input type="file" name="logoLocal" accept="image/*"></label><label>Cartão CNPJ<input type="file" name="cartaoCnpj"></label><label>Fotos<input type="file" name="fotos" multiple></label></div><details><summary>⏰ Horário funcionamento</summary><div class="grid4"><label>Seg-sex abre<input name="horaSegSexAbre" data-mask="hora" value="${esc(l.horaSegSexAbre)}" placeholder="HH:MM"></label><label>Seg-sex fecha<input name="horaSegSexFecha" data-mask="hora" value="${esc(l.horaSegSexFecha)}" placeholder="HH:MM"></label><label>Sábado abre<input name="horaSabAbre" data-mask="hora" value="${esc(l.horaSabAbre)}" placeholder="HH:MM"></label><label>Sábado fecha<input name="horaSabFecha" data-mask="hora" value="${esc(l.horaSabFecha)}" placeholder="HH:MM"></label><label>Domingo/Feriado<select name="domFeriadoStatus"><option ${norm(l.domFeriadoStatus||'FECHADO')==='FECHADO'?'selected':''}>FECHADO</option><option ${norm(l.domFeriadoStatus)==='ABERTO'?'selected':''}>ABERTO</option></select></label></div><textarea name="horario" placeholder="Observações">${esc(l.horario)}</textarea></details><div class="actions"><button>💾 Salvar</button><button type="button" data-cep>🔎 Buscar CEP</button><button type="button" data-cnpj>🔎 Buscar CNPJ</button><button type="button" data-geo>📍 Gerar localização</button></div></form>`)}
@@ -379,13 +354,13 @@ function proprietarioForm(req,p={}){return page(req,p.id?'Editar proprietário':
 app.get('/proprietarios',auth,need('PROPRIETARIOS'),(req,res)=>{const d=load(),q=norm(req.query.q||''),show=req.query.mostrar||q;const lista=show?d.proprietarios.filter(p=>!q||norm([p.nome,p.cnpj,p.cpf,p.cidade,p.telefone].join(' ')).includes(q)):[];res.send(page(req,'Proprietários',`<div class="bar"><h2>👥 Proprietários</h2><a class="btn" href="/proprietarios/novo">➕ Novo</a></div>${busca('/proprietarios','Buscar proprietário...')}<div class="card">${tabela(['Nome','Cidade/UF','Documento','Telefone','Ações'],lista.map(p=>`<tr><td>${esc(p.nome)}</td><td>${esc(p.cidade)}/${esc(p.uf)}</td><td>${esc(p.cnpj||p.cpf)}</td><td>${esc(p.telefone)}</td><td><a class="btn small" href="/proprietarios/${p.id}/editar">✏️ Editar</a><form class="inline-form" method="post" action="/proprietarios/${p.id}/excluir"><button class="small danger">🗑️ Excluir</button></form></td></tr>`),'Use a busca ou Mostrar todos.')}</div>`))});app.get('/proprietarios/novo',auth,need('PROPRIETARIOS'),(req,res)=>res.send(proprietarioForm(req)));app.get('/proprietarios/:id/editar',auth,need('PROPRIETARIOS'),(req,res)=>res.send(proprietarioForm(req,load().proprietarios.find(p=>String(p.id)===String(req.params.id))||{})));app.post(['/proprietarios/novo','/proprietarios/:id/editar'],auth,need('PROPRIETARIOS'),upload.fields([{name:'cartaoCnpj',maxCount:1},{name:'fotos',maxCount:20}]),(req,res)=>{const d=load();let p=req.params.id?d.proprietarios.find(x=>String(x.id)===String(req.params.id)):null;if(!p){p={id:next(d,'proprietario')};d.proprietarios.push(p)}Object.assign(p,{nome:norm(req.body.nome),cnpj:dig(req.body.cnpj),cpf:dig(req.body.cpf),telefone:dig(req.body.telefone),whatsappResponsavel:dig(req.body.whatsappResponsavel),cep:dig(req.body.cep),uf:norm(req.body.uf),cidade:norm(req.body.cidade),endereco:norm(req.body.endereco)});if(req.files?.cartaoCnpj?.[0])p.cartaoCnpj=fileObj(req.files.cartaoCnpj[0]);p.fotos=[...arr(p.fotos),...manyFiles(req,'fotos')];save(d);res.redirect('/proprietarios')});app.post('/proprietarios/:id/excluir',auth,need('PROPRIETARIOS'),(req,res)=>{const d=load();d.proprietarios=d.proprietarios.filter(x=>String(x.id)!==String(req.params.id));save(d);res.redirect('/proprietarios')});
 
 function chamadoForm(req,c={}){const d=load(),edit=!!c.id;return page(req,edit?'Editar chamado':'Novo chamado',`<div class="bar"><h2>🎫 ${edit?'Editar':'Novo'} chamado</h2><a class="btn secondary" href="/chamados">Voltar</a></div><form class="card form" method="post" enctype="multipart/form-data"><div class="grid4"><label>Tipo número<select name="tipoNumero"><option>AUTOMÁTICO</option><option ${norm(c.tipoNumero)==='TERCEIRO'?'selected':''}>TERCEIRO</option></select></label><label>Nº chamado terceiro<input name="numeroExterno" value="${esc(c.numeroExterno)}"></label><label>Loja<input name="lojaNome" value="${esc(c.lojaNome)}" data-auto="lojas" required></label><label>Analista<input name="analista" value="${esc(c.analista)}" data-auto="analistas"></label><label>Tipo serviço<select name="tipoServico" id="tipoServico">${d.tiposServico.map(s=>`<option ${norm(c.tipoServico||'A DEFINIR')===norm(s)?'selected':''}>${esc(s)}</option>`).join('')}</select></label><label>Prestador <button type="button" class="mini-inline" id="btnSugestaoInline">🎯 Sugerir</button><input name="prestadorNome" id="prestadorNome" value="${esc(c.prestadorNome)}" data-auto="prestadores"></label><label>Prioridade<select name="prioridade">${['MÍNIMA','MÉDIA','MÁXIMA'].map(s=>`<option ${norm(c.prioridade||'MÉDIA')===s?'selected':''}>${s}</option>`).join('')}</select></label><label>Status<select name="status">${d.statusChamado.map(s=>`<option ${norm(c.status||'ABERTO')===norm(s)?'selected':''}>${esc(s)}</option>`).join('')}</select></label><label>Valor serviço<input name="valor" value="${esc(c.valor||0)}"></label><label>Data orçamento<input type="date" name="dataOrcamento" value="${esc(c.dataOrcamento)}"></label><label>Data agendada<input type="date" name="dataAgendada" value="${esc(c.dataAgendada)}"></label><label>Por conta proprietário?<select name="servicoProprietario"><option ${norm(c.servicoProprietario||'NÃO')==='NÃO'?'selected':''}>NÃO</option><option ${norm(c.servicoProprietario)==='SIM'?'selected':''}>SIM</option></select></label></div><label>Descrição serviços<textarea name="descricao" required>${esc(c.descricao)}</textarea></label><label>Observações<textarea name="observacoes">${esc(c.observacoes)}</textarea></label><label>Anexos/imagens<input type="file" name="anexos" multiple></label><div class="actions"><button type="button" id="btnSugestao">🎯 Sugerir prestador</button><a class="btn secondary" href="/tipos-servico">🛠️ Tipos de serviço</a><button>💾 Salvar</button>${edit?`<a class="btn" href="/os/nova?q=${encodeURIComponent(c.numeroInterno||c.id)}">📄 Gerar O.S.</a>`:''}</div><div id="sugestoes" class="hint"></div></form>`)}
-app.get('/chamados',auth,need('CHAMADOS'),(req,res)=>{const d=load(),q=norm(req.query.q||''),analista=norm(req.query.analista||''),show=req.query.mostrar||q||analista;let lista=show?d.chamados.slice():[]; const sf=norm(req.query.status||'ABERTOS'); if(sf==='ABERTOS') lista=lista.filter(c=>!finalizado(c.status)); if(sf==='FINALIZADOS') lista=lista.filter(c=>finalizado(c.status)); if(q)lista=lista.filter(c=>norm([c.numeroInterno,c.numeroExterno,c.lojaNome,c.prestadorNome,c.analista,c.status,c.tipoServico,c.descricao].join(' ')).includes(q));if(analista)lista=lista.filter(c=>norm(c.analista).includes(analista));res.send(page(req,'Chamados',`<div class="bar"><h2>🎫 Chamados</h2><a class="btn" href="/chamados/rapido">➕ Chamado rápido</a><a class="btn secondary" href="/chamados/novo-completo">🎫 Chamado completo</a></div><form class="card search" method="get"><input name="q" value="${esc(req.query.q||'')}" placeholder="Buscar chamado, loja, prestador..."><input name="analista" value="${esc(req.query.analista||'')}" placeholder="Analista" data-auto="analistas"><select name="status"><option value="ABERTOS">SOMENTE ABERTOS</option><option value="TODOS" ${norm(req.query.status)==='TODOS'?'selected':''}>TODOS</option><option value="FINALIZADOS" ${norm(req.query.status)==='FINALIZADOS'?'selected':''}>FINALIZADOS/CANCELADOS</option></select><button>🔎 Buscar</button><a class="btn" href="/chamados?mostrar=1&status=ABERTOS">Mostrar abertos</a><a class="btn secondary" href="/chamados?mostrar=1&status=TODOS">Mostrar todos</a></form><div class="card">${tabela(['Nº','Loja','Analista','Prestador','Serviço','Prioridade','Status','Data','Ações'],lista.map(c=>`<tr><td>${esc(c.numeroInterno||c.id)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista)}</td><td>${esc(c.prestadorNome)}</td><td>${esc(c.tipoServico)}</td><td>${esc(c.prioridade)}</td><td>${esc(c.status)}</td><td>${br(c.dataAbertura)}</td><td><a class="btn small" href="/chamados/${c.id}/editar">🛠️ Tratar</a><form class="inline-form" method="post" action="/chamados/${c.id}/migrar"><input name="analista" placeholder="Novo analista" data-auto="analistas"><button class="small">👤 Migrar</button></form></td></tr>`),'Use a busca ou Mostrar todos.')}</div>`))});app.get('/chamados-por-analista',auth,need('CHAMADOS'),(req,res)=>{req.query.analista=req.query.analista||user(req).nome; req.query.mostrar='1'; const d=load(),a=norm(req.query.analista),lista=d.chamados.filter(c=>!finalizado(c.status)&&(!a||norm(c.analista).includes(a)));res.send(page(req,'Chamados por Analista',`<div class="bar"><h2>👤 Chamados por Analista</h2><a class="btn" href="/chamados">Todos</a></div><form class="card search" method="get"><input name="analista" value="${esc(req.query.analista)}" data-auto="analistas"><button>Buscar</button></form><div class="card">${tabela(['Nº','Loja','Analista','Prestador','Serviço','Status','Ações'],lista.map(c=>`<tr><td>${esc(c.numeroInterno)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista)}</td><td>${esc(c.prestadorNome)}</td><td>${esc(c.tipoServico)}</td><td>${esc(c.status)}</td><td><a class="btn small" href="/chamados/${c.id}/editar">Tratar</a></td></tr>`))}</div>`))});app.get(['/chamados/novo-completo','/chamados/novo','/chamados/rapido'],auth,need('CHAMADOS'),(req,res)=>res.send(chamadoForm(req)));app.get('/chamados/:id/editar',auth,need('CHAMADOS'),(req,res)=>res.send(chamadoForm(req,load().chamados.find(c=>String(c.id)===String(req.params.id))||{})));app.post(['/chamados/novo-completo','/chamados/novo','/chamados/rapido','/chamados/:id/editar'],auth,need('CHAMADOS'),upload.fields([{name:'anexos',maxCount:30}]),(req,res)=>{const d=load();let c=req.params.id?d.chamados.find(x=>String(x.id)===String(req.params.id)):null;if(!c){c={id:next(d,'chamado'),numeroInterno:next(d,'numeroChamado'),criadoEm:now(),abertoPor:user(req).nome};d.chamados.push(c)}const loja=findLoja(d,req.body.lojaNome),prest=findPrestador(d,req.body.prestadorNome);Object.assign(c,{tipoNumero:req.body.tipoNumero||'AUTOMÁTICO',numeroExterno:dig(req.body.numeroExterno),lojaId:loja.id||'',lojaNome:norm(req.body.lojaNome||loja.nome),analista:norm(req.body.analista),prestadorId:prest.id||'',prestadorNome:norm(req.body.prestadorNome||prest.empresa||prest.responsavel),tipoServico:norm(req.body.tipoServico||'A DEFINIR'),prioridade:norm(req.body.prioridade||'MÉDIA'),status:norm(req.body.status||'ABERTO'),valor:money(req.body.valor),dataOrcamento:req.body.dataOrcamento||'',dataAgendada:req.body.dataAgendada||'',dataAbertura:c.dataAbertura||today(),descricao:norm(req.body.descricao),observacoes:norm(req.body.observacoes),servicoProprietario:norm(req.body.servicoProprietario||'NÃO'),atualizadoEm:now()});c.anexos=[...arr(c.anexos),...manyFiles(req,'anexos')];save(d);res.redirect(`/chamados/${c.id}/editar`)});app.post('/chamados/:id/migrar',auth,need('CHAMADOS'),(req,res)=>{const d=load(),c=d.chamados.find(x=>String(x.id)===String(req.params.id));if(c){c.historico=arr(c.historico);c.historico.push({tipo:'MIGRAR_ANALISTA',de:c.analista,para:norm(req.body.analista),por:user(req).nome,data:now()});c.analista=norm(req.body.analista);save(d)}res.redirect('/chamados?mostrar=1')});
+app.get('/chamados',auth,need('CHAMADOS'),(req,res)=>{const d=load(),q=norm(req.query.q||''),analista=norm(req.query.analista||''),show=req.query.mostrar||q||analista;let lista=show?d.chamados.filter(c=>!finalizado(c.status)):[];if(q)lista=lista.filter(c=>norm([c.numeroInterno,c.numeroExterno,c.lojaNome,c.prestadorNome,c.analista,c.status,c.tipoServico,c.descricao].join(' ')).includes(q));if(analista)lista=lista.filter(c=>norm(c.analista).includes(analista));res.send(page(req,'Chamados',`<div class="bar"><h2>🎫 Chamados</h2><a class="btn" href="/chamados/rapido">➕ Chamado rápido</a><a class="btn secondary" href="/chamados/novo-completo">🎫 Chamado completo</a></div><form class="card search" method="get"><input name="q" placeholder="Buscar chamado, loja, prestador..."><input name="analista" placeholder="Analista" data-auto="analistas"><button>🔎 Buscar</button><a class="btn" href="/chamados?mostrar=1">Mostrar todos</a></form><div class="card">${tabela(['Nº','Loja','Analista','Prestador','Serviço','Prioridade','Status','Data','Ações'],lista.map(c=>`<tr><td>${esc(c.numeroInterno||c.id)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista)}</td><td>${esc(c.prestadorNome)}</td><td>${esc(c.tipoServico)}</td><td>${esc(c.prioridade)}</td><td>${esc(c.status)}</td><td>${br(c.dataAbertura)}</td><td><a class="btn small" href="/chamados/${c.id}/editar">🛠️ Tratar</a><form class="inline-form" method="post" action="/chamados/${c.id}/migrar"><input name="analista" placeholder="Novo analista" data-auto="analistas"><button class="small">👤 Migrar</button></form></td></tr>`),'Use a busca ou Mostrar todos.')}</div>`))});app.get('/chamados-por-analista',auth,need('CHAMADOS'),(req,res)=>{req.query.analista=req.query.analista||user(req).nome; req.query.mostrar='1'; const d=load(),a=norm(req.query.analista),lista=d.chamados.filter(c=>!finalizado(c.status)&&(!a||norm(c.analista).includes(a)));res.send(page(req,'Chamados por Analista',`<div class="bar"><h2>👤 Chamados por Analista</h2><a class="btn" href="/chamados">Todos</a></div><form class="card search" method="get"><input name="analista" value="${esc(req.query.analista)}" data-auto="analistas"><button>Buscar</button></form><div class="card">${tabela(['Nº','Loja','Analista','Prestador','Serviço','Status','Ações'],lista.map(c=>`<tr><td>${esc(c.numeroInterno)}</td><td>${esc(c.lojaNome)}</td><td>${esc(c.analista)}</td><td>${esc(c.prestadorNome)}</td><td>${esc(c.tipoServico)}</td><td>${esc(c.status)}</td><td><a class="btn small" href="/chamados/${c.id}/editar">Tratar</a></td></tr>`))}</div>`))});app.get(['/chamados/novo-completo','/chamados/novo','/chamados/rapido'],auth,need('CHAMADOS'),(req,res)=>res.send(chamadoForm(req)));app.get('/chamados/:id/editar',auth,need('CHAMADOS'),(req,res)=>res.send(chamadoForm(req,load().chamados.find(c=>String(c.id)===String(req.params.id))||{})));app.post(['/chamados/novo-completo','/chamados/novo','/chamados/rapido','/chamados/:id/editar'],auth,need('CHAMADOS'),upload.fields([{name:'anexos',maxCount:30}]),(req,res)=>{const d=load();let c=req.params.id?d.chamados.find(x=>String(x.id)===String(req.params.id)):null;if(!c){c={id:next(d,'chamado'),numeroInterno:next(d,'numeroChamado'),criadoEm:now(),abertoPor:user(req).nome};d.chamados.push(c)}const loja=findLoja(d,req.body.lojaNome),prest=findPrestador(d,req.body.prestadorNome);Object.assign(c,{tipoNumero:req.body.tipoNumero||'AUTOMÁTICO',numeroExterno:dig(req.body.numeroExterno),lojaId:loja.id||'',lojaNome:norm(req.body.lojaNome||loja.nome),analista:norm(req.body.analista),prestadorId:prest.id||'',prestadorNome:norm(req.body.prestadorNome||prest.empresa||prest.responsavel),tipoServico:norm(req.body.tipoServico||'A DEFINIR'),prioridade:norm(req.body.prioridade||'MÉDIA'),status:norm(req.body.status||'ABERTO'),valor:money(req.body.valor),dataOrcamento:req.body.dataOrcamento||'',dataAgendada:req.body.dataAgendada||'',dataAbertura:c.dataAbertura||today(),descricao:norm(req.body.descricao),observacoes:norm(req.body.observacoes),servicoProprietario:norm(req.body.servicoProprietario||'NÃO'),atualizadoEm:now()});c.anexos=[...arr(c.anexos),...manyFiles(req,'anexos')];save(d);res.redirect(`/chamados/${c.id}/editar`)});app.post('/chamados/:id/migrar',auth,need('CHAMADOS'),(req,res)=>{const d=load(),c=d.chamados.find(x=>String(x.id)===String(req.params.id));if(c){c.historico=arr(c.historico);c.historico.push({tipo:'MIGRAR_ANALISTA',de:c.analista,para:norm(req.body.analista),por:user(req).nome,data:now()});c.analista=norm(req.body.analista);save(d)}res.redirect('/chamados?mostrar=1')});
 
 
 /* V16.1 - impressão de O.S. no padrão enviado pelo usuário */
 function osLogoEscolhido(d,loja){if((d.config.usarLogoLojaOS||'SIM')!=='NAO')return publicFile(loja.logoLocal)||loja.logoUrl||appLogo(d);return appLogo(d)||publicFile(loja.logoLocal)||loja.logoUrl}
 
-/* ================= PATCH V20.10.0 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
+/* ================= PATCH V20.9.8 - OS AGRUPADA + ASSINATURA + WHATSAPP LOJA ================= */
 function os83State(){ return load(); }
 function os83Closed(c){ return finalizado(c.status) || finalizado(c.statusOs); }
 function os83Num(c){ return c.numeroInterno || c.numeroExterno || c.numero || c.id || ''; }
@@ -400,10 +375,10 @@ function os83UserByAnalista(d,req,nome){
          d.usuarios.find(u=>norm(u.usuario)===norm(nome||'')) || sess || {};
 }
 
-/* PATCH V20.10.0 - URL segura para imagens/assinaturas */
+/* PATCH V20.9.8 - URL segura para imagens/assinaturas */
 function os2091PublicPath(v){
   if(!v) return '';
-  if(typeof v === 'object') v = v.dataUrl || v.base64 || v.url || v.path || v.filename || '';
+  if(typeof v === 'object') v = v.url || v.path || v.filename || v.dataUrl || '';
   v=String(v||'').trim();
   if(!v) return '';
   if(v.startsWith('data:') || /^https?:\/\//i.test(v)) return v;
@@ -412,17 +387,15 @@ function os2091PublicPath(v){
   return '/uploads/' + v;
 }
 function os83Assinatura(d,req,chamados){
-  chamados=Array.isArray(chamados)?chamados:[];
   const nome=(chamados.find(c=>c.analista)?.analista)||user(req)?.nome||user(req)?.usuario||'';
-  const u=os83UserByAnalista(d,req,nome)||{};
-  const raw = u.assinaturaUsuario || u.assinaturaDigital || u.assinatura || u.assinaturaLocal || u.imagemAssinatura || u.fotoAssinatura || u.signature || u.signatureImage || '';
-  const img=(typeof v2099_usuarioAssinatura==='function' ? v2099_usuarioAssinatura(u) : '') || os2091PublicPath(raw);
-  const nomeFinal=u.nome||nome||'';
-  return img ? `<img class="assinatura-digital-os" src="${esc(img)}" onerror="this.style.display='none'"><br><span>${esc(nomeFinal)}</span>` : `<span>${esc(nomeFinal)}</span>`;
+  const u=os83UserByAnalista(d,req,nome);
+  const raw=u.assinaturaDigital||u.assinatura||u.assinaturaUrl||u.imagemAssinatura||u.assinaturaLocal||u.fotoAssinatura||u.signature||u.signatureImage||'';
+  const img=os2091PublicPath(raw);
+  return img ? `<img class="assinatura-digital-os" src="${esc(img)}" onerror="this.style.display='none'"><br><span>${esc(u.nome||nome)}</span>` : `<span>${esc(u.nome||nome)}</span>`;
 }
 function os83WhatsappLink(tel,msg){ const n=dig(tel); return n?`https://wa.me/55${n}?text=${encodeURIComponent(msg)}`:''; }
 
-/* PATCH V20.10.0 - WHATSAPP LOJA/PRESTADOR COM LINK DA O.S. PARA PDF */
+/* PATCH V20.9.8 - WHATSAPP LOJA/PRESTADOR COM LINK DA O.S. PARA PDF */
 function os2092Phone(obj){
   obj=obj||{};
   return obj.whatsappResponsavel || obj.whatsapp_responsavel || obj.whatsappResponsavelLoja || obj.whatsapp_loja || obj.whatsapp || obj.celular || obj.telefoneResponsavel || obj.telefone_responsavel || obj.telefone || obj.fone || '';
@@ -445,20 +418,10 @@ function os83ChamadosDaOS(d,os){
   return ch;
 }
 
-
-/* PATCH V20.10.0 - ALIASES SEGUROS PARA ROTAS ANTIGAS DE O.S. */
-function OS83STATE(){ return os83State(); }
-function OS83CLOSED(c){ return os83Closed(c); }
-function OS83NUM(c){ return os83Num(c); }
-function OS83GROUPKEY(c){ return os83GroupKey(c); }
 app.get('/os',auth,need('ORDENS_SERVICO'),(req,res)=>{
-  const d=os83State(); const q=norm(req.query.q||''); const mostrar=norm(req.query.mostrar||'OS');
-  let listaOs=(d.os||[]).slice();
-  if(q) listaOs=listaOs.filter(o=>norm([o.numero,o.numeroOs,o.lojaNome,o.prestadorNome,o.status,o.observacoes].join(' ')).includes(q));
-  const rows=listaOs.map(o=>`<tr><td>${esc(o.numero||o.numeroOs||o.id)}</td><td>${esc(o.lojaNome||'')}</td><td>${esc(o.prestadorNome||'')}</td><td>${os83Ids(o.chamados||o.chamadoIds).length}</td><td>${moeda(o.valorTotal||0)}</td><td><a class="btn small" href="/os-impressao/${o.id}">🖨️ VER/IMPRIMIR</a> <a class="btn small secondary" href="/os/${o.id}/editar">✏️ EDITAR</a></td></tr>`).join('');
-  const abertos=(d.chamados||[]).filter(c=>!os83Closed(c));
-  const chamadosRows=abertos.filter(c=>!q||norm([os83Num(c),c.lojaNome,c.prestadorNome,c.descricao,c.tipoServico,c.status].join(' ')).includes(q)).map(c=>`<tr><td>${esc(os83Num(c))}</td><td>${esc(c.lojaNome||'')}</td><td>${esc(c.prestadorNome||'')}</td><td>${esc(c.tipoServico||'')}</td><td>${esc(c.status||'ABERTO')}</td><td><a class="btn small" href="/os-impressao/chamado-${c.id}">🖨️ IMPRIMIR</a> <a class="btn small secondary" href="/chamados/${c.id}/editar">✏️ EDITAR</a></td></tr>`).join('');
-  res.send(page(req,'ORDENS DE SERVIÇO',`<div class="bar"><h2>📄 ORDENS DE SERVIÇO</h2><a class="btn" href="/os/nova">➕ GERAR O.S. AGRUPADA</a><a class="btn secondary" href="/os?mostrar=chamados">🔎 CHAMADOS ABERTOS</a></div><form class="card search" method="get"><input name="q" value="${esc(req.query.q||'')}" placeholder="BUSCAR O.S., CHAMADO, LOJA OU PRESTADOR"><button>🔎 BUSCAR</button><a class="btn secondary" href="/os">LIMPAR</a></form><div class="card"><h3>O.S. GERADAS</h3>${tabela(['Nº','LOJA','PRESTADOR','CHAMADOS','VALOR','AÇÕES'],rows,'Nenhuma O.S. encontrada.')}</div><div class="card"><h3>CHAMADOS ABERTOS PARA GERAR O.S.</h3>${tabela(['CHAMADO','LOJA','PRESTADOR','SERVIÇO','STATUS','AÇÕES'],chamadosRows,'Nenhum chamado aberto.')}</div>`));
+  const d=os83State();
+  const rows=d.os.map(o=>`<tr><td>${esc(o.numero||o.numeroOs||o.id)}</td><td>${esc(o.lojaNome||'')}</td><td>${esc(o.prestadorNome||'')}</td><td>${os83Ids(o.chamados||o.chamadoIds).length}</td><td>${moeda(o.valorTotal||0)}</td><td><a class="btn small" href="/os-impressao/${o.id}">🖨️ VER/IMPRIMIR</a> <a class="btn small secondary" href="/os/${o.id}/editar">✏️ EDITAR</a></td></tr>`);
+  res.send(page(req,'ORDENS DE SERVIÇO',`<div class="bar"><h2>📄 ORDENS DE SERVIÇO</h2><a class="btn" href="/os/nova">➕ GERAR O.S.</a></div><div class="card">${tabela(['Nº','LOJA','PRESTADOR','CHAMADOS','VALOR','AÇÕES'],rows)}</div>`));
 });
 
 app.get('/os/nova',auth,need('ORDENS_SERVICO'),(req,res)=>{
@@ -636,7 +599,7 @@ function v158_excelDate(v){
 }
 function v158_clone(v){return JSON.parse(JSON.stringify(v??null))}
 function v158_atomicSave(d){
-  // PATCH V20.10.0: importação precisa salvar pela função oficial save(),
+  // PATCH V20.9.8: importação precisa salvar pela função oficial save(),
   // pois ela atualiza cache em memória e envia para Supabase.
   try{
     if(typeof save === 'function'){
@@ -644,7 +607,7 @@ function v158_atomicSave(d){
       return true;
     }
   }catch(e){
-    console.error('V20.10.0 erro save importação:', e.message || e);
+    console.error('V20.9.8 erro save importação:', e.message || e);
   }
   const tmp=DB_FILE+'.tmp';
   fs.writeFileSync(tmp, JSON.stringify(d,null,2),'utf8');
@@ -665,7 +628,7 @@ function v158_headerIndex(headers, names){
   return -1;
 }
 
-/* PATCH V20.10.0 - IMPORTAÇÃO VESTCASA SEM DUPLICAR E COM CAMPOS CORRETOS */
+/* PATCH V20.9.8 - IMPORTAÇÃO VESTCASA SEM DUPLICAR E COM CAMPOS CORRETOS */
 function v2097_nameKey(v){return v158_norm(v).replace(/\b(LTDA|ME|EPP|EIRELI|SA|S A|SERVICOS|SERVIÇOS|COMERCIO|COMÉRCIO|MANUTENCAO|MANUTENÇÃO)\b/g,'').replace(/[^A-Z0-9]+/g,' ').trim()}
 function v2097_phoneKey(v){return v158_dig(v).slice(-11)}
 function v2097_numKey(v){return v158_dig(v)}
@@ -1775,7 +1738,7 @@ function v161db(){if(typeof v160_db==="function")return v160_db();if(typeof v154
 function v161save(d){if(typeof v160_save==="function")return v160_save(d);if(typeof v154_saveDB==="function")return v154_saveDB(d);if(typeof save==="function")return save(d);if(typeof saveDB==="function")return saveDB(d);const f=(typeof DB_FILE!=="undefined")?DB_FILE:(typeof DATA_FILE!=="undefined"?DATA_FILE:path.join(process.cwd(),"data","db.json"));if(!fs.existsSync(path.dirname(f)))fs.mkdirSync(path.dirname(f),{recursive:true});fs.writeFileSync(f,JSON.stringify(d,null,2))}
 function v161init(d){d.lojas=Array.isArray(d.lojas)?d.lojas:[];d.prestadores=Array.isArray(d.prestadores)?d.prestadores:[];d.chamados=Array.isArray(d.chamados)?d.chamados:[];d.config=d.config||{};return d}
 function v161err(req,e){if(typeof errorPage==="function")return errorPage(req,e);return `<h1>Erro tratado</h1><p>${String(e&&e.message||e)}</p><a href="/">Início</a>`}
-function v161lay(req,t,b){return typeof page==="function"?page(req,t,b):(typeof layout==="function"?layout(req,t,b):`<!doctype html><html><head><meta charset="utf-8"><title>${t}</title><link rel="stylesheet" href="/public/style.css"></head><body>${b}</body></html>`)}
+function v161lay(req,t,b){return typeof layout==="function"?layout(req,t,b):`<!doctype html><html><head><meta charset="utf-8"><title>${t}</title><link rel="stylesheet" href="/style.css"></head><body>${b}</body></html>`}
 function v161perm(p){return typeof v160_perm==="function"?v160_perm(p):(typeof requirePerm==="function"?requirePerm(p):(req,res,next)=>next())}
 function v161closed(s){s=v161u(s);return ["FINALIZADO","FECHADO","CANCELADO","CONCLUIDO","CONCLUÍDO"].includes(s)}
 function v161today(){return typeof today==="function"?today():new Date().toISOString().slice(0,10)}
@@ -1819,12 +1782,12 @@ app.get("/chamados/:id/os", auth, (req,res)=>res.redirect(`/os/${req.params.id}/
 
 app.get('/api/v2084/status', auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,versao:'V20.10.0',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
+  res.json({ok:true,versao:'V20.9.8',supabaseConfigurado:!!supabasePersist,supabaseOk,lastSaveOk,lastSaveAt,erroSupabase:lastPersistError||'',state_id:SUPABASE_STATE_ID,local:{usuarios:d.usuarios.length,lojas:d.lojas.length,prestadores:d.prestadores.length,chamados:d.chamados.length,os:d.os.length,lembretes:d.lembretes.length,preventivas:d.preventivas.length}});
 });
 
 
 
-/* PATCH V20.10.0 - diagnóstico de importação/persistência */
+/* PATCH V20.9.8 - diagnóstico de importação/persistência */
 app.get('/api/v2087/status', auth, async (req,res)=>{
   try{
     const local = load();
@@ -1838,7 +1801,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
     }
     res.json({
       ok:true,
-      versao:'20.10.0',
+      versao:'20.9.8',
       supabaseConfigurado: !!(typeof supabasePersist !== 'undefined' && supabasePersist),
       erroRemoto,
       local:{
@@ -1861,7 +1824,7 @@ app.get('/api/v2087/status', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.10.0 - STATUS E REPARO */
+/* PATCH V20.9.8 - STATUS E REPARO */
 app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (req,res)=>{
   const d=load();
   let remoto=null, erroRemoto='';
@@ -1873,7 +1836,7 @@ app.get(['/api/v2090/status','/api/status','/api/persist-status'], auth, async (
     }
   }catch(e){ erroRemoto=e.message||String(e); }
   res.json({
-    ok:true, version:'V20.10.0',
+    ok:true, version:'V20.9.8',
     supabaseConfigurado:!!supabasePersist, supabaseOk, remoteLoaded, lastSaveOk, lastSaveAt, lastRemoteLoadAt, erro:lastPersistError || erroRemoto,
     local:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length},
     remoto: remoto&&remoto.data ? {updated_at:remoto.updated_at, usuarios:(remoto.data.usuarios||[]).length, lojas:(remoto.data.lojas||[]).length, prestadores:(remoto.data.prestadores||[]).length, proprietarios:(remoto.data.proprietarios||[]).length, chamados:(remoto.data.chamados||[]).length, os:(remoto.data.os||[]).length} : null
@@ -1885,7 +1848,7 @@ app.post('/api/v2090/force-save', auth, async (req,res)=>{
 });
 
 
-/* PATCH V20.10.0 - diagnóstico e hidratação manual de imagens */
+/* PATCH V20.9.8 - diagnóstico e hidratação manual de imagens */
 app.post('/api/v2093/hidratar-imagens', auth, async (req,res)=>{
   try{
     const d=hydratePersistentImages(load());
@@ -1900,18 +1863,15 @@ app.get('/api/v2093/status', auth, (req,res)=>{
   const logosData=(d.lojas||[]).filter(l=>l.logoLocal&&l.logoLocal.dataUrl).length;
   const ass=(d.usuarios||[]).filter(u=>u.assinatura||u.assinaturaDigital||u.assinaturaLocal).length;
   const assData=(d.usuarios||[]).filter(u=>(u.assinatura&&u.assinatura.dataUrl)||(u.assinaturaDigital&&u.assinaturaDigital.dataUrl)||(u.assinaturaLocal&&u.assinaturaLocal.dataUrl)).length;
-  res.json({ok:true,versao:'V20.10.0',logosComArquivo:logos,logosComDataUrl:logosData,assinaturasComArquivo:ass,assinaturasComDataUrl:assData,lastSaveOk,lastSaveAt,erro:lastPersistError});
+  res.json({ok:true,versao:'V20.9.8',logosComArquivo:logos,logosComDataUrl:logosData,assinaturasComArquivo:ass,assinaturasComDataUrl:assData,lastSaveOk,lastSaveAt,erro:lastPersistError});
 });
 
-
-/* PATCH V20.10.0 - ALIAS CHAMADOS POR ANALISTA */
-app.get(['/lojas-por-analista','/chamados-analista'], auth, need('CHAMADOS'), (req,res)=>res.redirect('/chamados-por-analista'));
 app.use((req,res)=>res.status(404).send(page(req,'Página não encontrada',`<div class="card"><h2>❌ Página não encontrada</h2><p>A rota ${esc(req.path)} não foi localizada.</p><a class="btn" href="/">🏠 Início</a></div>`)));
 app.use((err,req,res,nextfn)=>res.status(500).send(errorPage(req,err)));
 
 app.get(['/api/v2085/status','/api/persist-status'], auth, (req,res)=>{
   const d=load();
-  res.json({ok:true,version:'V20.10.0',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
+  res.json({ok:true,version:'V20.9.8',supabaseConfigurado:!!supabasePersist,supabaseOk,remoteLoaded,lastSaveOk,lastSaveAt,lastRemoteLoadAt,stateId:SUPABASE_STATE_ID,erro:lastPersistError,contagem:{usuarios:(d.usuarios||[]).length,lojas:(d.lojas||[]).length,prestadores:(d.prestadores||[]).length,proprietarios:(d.proprietarios||[]).length,chamados:(d.chamados||[]).length,os:(d.os||[]).length,lembretes:(d.lembretes||[]).length,preventivas:(d.preventivas||[]).length}});
 });
 app.post('/api/v2085/force-save', auth, async (req,res)=>{
   try{ await saveRemoteNow(load()); res.json({ok:true,lastSaveAt,erro:''}); }
@@ -1919,4 +1879,4 @@ app.post('/api/v2085/force-save', auth, async (req,res)=>{
 });
 
 await initPersistentDB();
-app.listen(PORT,()=>console.log('V&B Chamados V20.10.0 rodando na porta '+PORT));
+app.listen(PORT,()=>console.log('V&B Chamados V20.9.8 rodando na porta '+PORT));
