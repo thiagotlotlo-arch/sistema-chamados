@@ -1,0 +1,19 @@
+{
+  "name": "sistema-vestcasa-v20-8-24-final-banco-os",
+  "version": "20.8.24",
+  "type": "module",
+  "scripts": {
+    "start": "node --max-old-space-size=384 server.js",
+    "check": "node --check server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.3",
+    "express-session": "^1.17.3",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5",
+    "pdf-parse": "^1.1.1",
+    "@supabase/supabase-js": "^2.45.4",
+    "ws": "^8.18.0",
+    "pdfkit": "^0.15.0"
+  }
+}

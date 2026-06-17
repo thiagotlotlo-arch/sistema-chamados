@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: sistema-chamados
+    env: node
+    plan: free
+    buildCommand: rm -rf node_modules package-lock.json && npm install --omit=dev --no-audit --no-fund
+    startCommand: npm start
+    envVars:
+      - key: NODE_VERSION
+        value: 20.18.1
